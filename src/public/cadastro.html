@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Cadastro - CUIDAR SESC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fdf4;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
+        <a href="/" class="text-white hover:text-green-200 font-bold text-xl">&larr; Voltar</a>
+        <h1 class="text-2xl font-bold tracking-wide">Novo Cadastro</h1>
+        <div style="width: 60px;"></div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+
+            <div id="loadingIA" class="bg-blue-100 text-blue-800 p-4 rounded-lg text-center font-bold mb-4">
+                ⏳ Carregando Inteligência Artificial, por favor aguarde...
+            </div>
+
+            <div class="flex border-b border-gray-200 mb-8">
+                <button class="flex-1 py-4 px-6 text-center border-b-4 border-blue-600 font-bold text-blue-700 text-lg"
+                    id="tab-btn-1" onclick="mudarAba(1)">1. Dados Pessoais</button>
+                <button
+                    class="flex-1 py-4 px-6 text-center border-b-4 border-transparent text-gray-500 font-medium text-lg hover:text-gray-700"
+                    id="tab-btn-2" onclick="mudarAba(2)">2. Anamnese</button>
+                <button
+                    class="flex-1 py-4 px-6 text-center border-b-4 border-transparent text-gray-500 font-medium text-lg hover:text-gray-700"
+                    id="tab-btn-3" onclick="mudarAba(3)">3. Biometria (Fotos)</button>
+            </div>
+
+            <div id="telaSucesso" class="hidden text-center py-12">
+                <div class="text-9xl mb-6">✅</div>
+                <h2 class="text-5xl font-bold text-green-700 mb-4">Cadastro Concluído!</h2>
+                <p class="text-2xl text-gray-600 mb-10">O usuário foi registrado com sucesso no sistema.</p>
+                <a href="/"
+                    class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg transition transform hover:-translate-y-1">
+                    &larr; Voltar para o Início
+                </a>
+            </div>
+
+            <form id="formCadastro" onsubmit="enviarCadastro(event)">
+
+                <div id="aba-1" class="tab-content active">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Informações Básicas</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="col-span-2">
+                            <label class="block text-gray-700 font-bold mb-2 text-lg">Nome Completo *</label>
+                            <input type="text" id="nomeCompleto" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-bold mb-2 text-lg">Data de Nascimento *</label>
+                            <input type="date" id="dataNascimento" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end">
+                        <button type="button" onclick="mudarAba(2)"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Avançar
+                            para Anamnese &rarr;</button>
+                    </div>
+                </div>
+
+                <div id="aba-2" class="tab-content">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Ficha Médica Simplificada</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-bold mb-2 text-lg">Tipo Sanguíneo</label>
+                            <select id="tipoSanguineo"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
+                                <option value="">Não informado</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-bold mb-2 text-lg">Alergias</label>
+                            <input type="text" id="alergias"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 text-lg"
+                                placeholder="Ex: Penicilina, Dipirona">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-gray-700 font-bold mb-2 text-lg">Medicamentos de Uso
+                                Contínuo</label>
+                            <input type="text" id="medicamentos"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 text-lg"
+                                placeholder="Ex: Losartana, Metformina">
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" onclick="mudarAba(1)"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg transition">&larr;
+                            Voltar</button>
+                        <button type="button" onclick="mudarAba(3)"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Avançar
+                            para Biometria &rarr;</button>
+                    </div>
+                </div>
+
+                <div id="aba-3" class="tab-content">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Captura Facial</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <div
+                            class="bg-black rounded-xl overflow-hidden shadow-inner relative aspect-video flex items-center justify-center">
+                            <video id="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
+                        </div>
+
+                        <div class="flex flex-col justify-center h-full">
+                            <button type="button" id="btnCapturar"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl text-xl shadow-lg transition mb-6">
+                                📸 Capturar Foto (<span id="contagemFotos">0</span>/3)
+                            </button>
+                            <div id="galeriaFotos" class="grid grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
+
+                    <div id="mensagemStatus" class="mt-4 text-center font-bold text-lg hidden"></div>
+
+                    <div class="mt-8 flex justify-between border-t border-gray-200 pt-8">
+                        <button type="button" onclick="mudarAba(2)"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg transition">&larr;
+                            Voltar</button>
+                        <button type="submit" id="btnSalvar" disabled
+                            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-10 rounded-lg text-xl shadow-lg transition">✅
+                            Salvar Cadastro</button>
+                    </div>
+                </div>
+
+                <canvas id="canvasOculto" style="display: none;"></canvas>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Inicializa a IA assim que a página carrega
+        const divLoading = document.getElementById('loadingIA');
+
+        // Usando o servidor global (CDN) direto da fonte oficial, sem precisar baixar arquivos locais!
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]).then(() => {
+            divLoading.style.display = 'none';
+            console.log("IA carregada com sucesso do servidor global!");
+        }).catch((err) => {
+            divLoading.classList.remove('bg-blue-100', 'text-blue-800');
+            divLoading.classList.add('bg-red-100', 'text-red-800');
+            divLoading.innerText = '❌ Erro ao carregar IA: ' + err.message;
+            console.error("Erro detalhado da IA:", err);
+        });
+
+        function mudarAba(abaDestino) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('button[id^="tab-btn-"]').forEach(el => {
+                el.classList.remove('border-blue-600', 'text-blue-700');
+                el.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.getElementById(`aba-${abaDestino}`).classList.add('active');
+            const btnAtivo = document.getElementById(`tab-btn-${abaDestino}`);
+            btnAtivo.classList.remove('border-transparent', 'text-gray-500');
+            btnAtivo.classList.add('border-blue-600', 'text-blue-700');
+
+            if (abaDestino === 3) iniciarCamera();
+        }
+
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasOculto');
+        const btnCapturar = document.getElementById('btnCapturar');
+        const btnSalvar = document.getElementById('btnSalvar');
+
+        let fotosCapturadas = [];
+        let faceDescriptors = []; // Array que vai guardar os números do rosto
+        let stream = null;
+
+        async function iniciarCamera() {
+            if (stream) return;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Erro ao acessar a câmera. Verifique as permissões.");
+            }
+        }
+
+        btnCapturar.addEventListener('click', async () => {
+            if (fotosCapturadas.length >= 3) return;
+
+            const textoOriginal = btnCapturar.innerHTML;
+            btnCapturar.disabled = true;
+            btnCapturar.classList.add('opacity-50', 'cursor-not-allowed');
+            btnCapturar.innerHTML = '⏳ Processando IA...';
+
+            try {
+                // 1. A IA analisa o vídeo
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor();
+
+                if (!detection) {
+                    alert("Nenhum rosto detectado! A iluminação pode estar muito escura ou com muita sombra.");
+                    btnCapturar.disabled = false;
+                    btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btnCapturar.innerHTML = textoOriginal;
+                    return;
+                }
+
+                // 2. Extrai a imagem para a galeria
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+                // 3. Guarda as informações
+                fotosCapturadas.push(dataUrl);
+                faceDescriptors.push(detection.descriptor);
+
+                // Exibe a miniatura na tela
+                const imgEl = document.createElement('img');
+                imgEl.src = dataUrl;
+                imgEl.className = 'rounded border-2 border-indigo-200 object-cover w-full aspect-square';
+                document.getElementById('galeriaFotos').appendChild(imgEl);
+
+                // 4. Verifica se já tirou as 3
+                if (fotosCapturadas.length >= 3) {
+                    btnCapturar.innerHTML = '✅ Captura Concluída';
+                    btnSalvar.disabled = false;
+                } else {
+                    btnCapturar.disabled = false;
+                    btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
+                    // Recriamos o span aqui com o número novo!
+                    btnCapturar.innerHTML = `📸 Capturar Foto (<span id="contagemFotos">${fotosCapturadas.length}</span>/3)`;
+                }
+
+            } catch (erro) {
+                console.error("Erro interno:", erro);
+                alert("Erro técnico: " + erro.message);
+                btnCapturar.disabled = false;
+                btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnCapturar.innerHTML = textoOriginal;
+            }
+        });
+
+        async function enviarCadastro(event) {
+            event.preventDefault();
+            btnSalvar.disabled = true;
+            btnSalvar.innerText = "⏳ Salvando dados...";
+
+            let meanDescriptor = new Float32Array(128).fill(0);
+            faceDescriptors.forEach(desc => {
+                for (let i = 0; i < 128; i++) meanDescriptor[i] += desc[i];
+            });
+            for (let i = 0; i < 128; i++) meanDescriptor[i] /= faceDescriptors.length;
+
+            const dadosIdoso = {
+                nomeCompleto: document.getElementById('nomeCompleto').value,
+                dataNascimento: document.getElementById('dataNascimento').value,
+                fotosBase64: fotosCapturadas,
+                faceDescriptor: Array.from(meanDescriptor),
+                anamnese: {
+                    tipoSanguineo: document.getElementById('tipoSanguineo').value,
+                    alergias: document.getElementById('alergias').value.split(',').map(a => a.trim()).filter(a => a),
+                    medicamentosUsoContinuo: document.getElementById('medicamentos').value.split(',').map(m => m.trim()).filter(m => m)
+                }
+            };
+
+            try {
+                const response = await fetch('/api/idosos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosIdoso)
+                });
+
+                if (response.ok) {
+                    // SUCESSO: Esconde o formulário e as abas, e mostra a tela gigante de sucesso!
+                    document.getElementById('formCadastro').style.display = 'none';
+                    document.querySelector('.flex.border-b').style.display = 'none'; // Esconde os botões das abas
+                    document.getElementById('telaSucesso').classList.remove('hidden');
+                } else {
+                    const err = await response.json();
+                    alert('Erro: ' + err.erro);
+                    btnSalvar.disabled = false;
+                    btnSalvar.innerText = "✅ Salvar Cadastro";
+                }
+            } catch (error) {
+                alert('Erro de conexão com o servidor.');
+                btnSalvar.disabled = false;
+                btnSalvar.innerText = "✅ Salvar Cadastro";
+            }
+        }
+    </script>
+</body>
+
+</html>

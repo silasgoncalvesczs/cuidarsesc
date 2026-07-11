@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CUIDAR SESC - Início</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fonte mais legível e fundo com um verde bem suave */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <nav class="bg-violet-700 text-white p-6 shadow-md">
+        <h1 class="text-4xl font-bold text-center tracking-wide">CUIDAR SESC</h1>
+    </nav>
+
+    <main class="container mx-auto mt-12 p-4">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-semibold text-green-800">Bem-vindo(a) ao Sistema</h2>
+            <p class="text-2xl mt-4 text-gray-600">Selecione uma opção abaixo para começar:</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+            <a href="/chamada.html"
+                class="bg-white rounded-3xl shadow-xl p-10 text-center hover:bg-green-50 transition transform hover:-translate-y-2 border-b-8 border-green-600 flex flex-col items-center justify-center">
+                <div class="text-7xl mb-6">📸</div>
+                <h3 class="text-4xl font-bold text-green-700">Registrar Presença</h3>
+                <p class="mt-4 text-xl text-gray-600">Reconhecimento facial para entrada nas atividades.</p>
+            </a>
+
+            <a href="/cadastro.html"
+                class="bg-white rounded-3xl shadow-xl p-10 text-center hover:bg-blue-50 transition transform hover:-translate-y-2 border-b-8 border-blue-600 flex flex-col items-center justify-center">
+                <div class="text-7xl mb-6">📝</div>
+                <h3 class="text-4xl font-bold text-blue-700">Novo Cadastro</h3>
+                <p class="mt-4 text-xl text-gray-600">Cadastrar usuário, fotos e ficha de anamnese.</p>
+            </a>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

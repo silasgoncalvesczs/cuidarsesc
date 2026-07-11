@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Presença - CUIDAR SESC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800 min-h-screen flex flex-col overflow-hidden">
+
+    <!-- Barra Superior -->
+    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center h-16">
+        <a href="/" class="text-white hover:text-green-200 font-bold text-xl">&larr; Voltar</a>
+        <h1 class="text-2xl font-bold tracking-wide">Totem de Presença Automática</h1>
+        <div style="width: 60px;"></div>
+    </nav>
+
+    <div id="loadingIA" class="bg-blue-100 text-blue-800 p-3 font-bold text-center text-lg shadow">
+        ⏳ Inicializando sensores e Inteligência Artificial...
+    </div>
+
+    <!-- Layout Principal Ajustado para Caber em Qualquer Tela Sem Rolagem -->
+    <main
+        class="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch h-[calc(100vh-80px)] max-h-[calc(100vh-80px)]">
+
+        <!-- COLUNA 1: CONFIGURAÇÕES (Largura 1/4) -->
+        <div
+            class="bg-white rounded-2xl shadow-lg p-5 flex flex-col justify-between border border-gray-100 h-full overflow-y-auto">
+            <div>
+                <h2 class="text-xl font-bold text-green-800 mb-4 border-b pb-2">Atividade</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-600 font-semibold mb-2 text-sm">Selecione o Evento:</label>
+                    <select id="selectAtividade" onchange="verificarNovaAtividade(this.value)"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 text-base bg-gray-50 outline-none">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+
+                <div id="campoNovaAtividade" class="hidden bg-yellow-50 p-3 rounded-xl border border-yellow-200 mb-4">
+                    <label class="block text-yellow-800 font-bold mb-1 text-sm">Nome da Atividade:</label>
+                    <input type="text" id="inputNovaAtividade"
+                        class="w-full px-3 py-2 rounded-xl border border-yellow-300 text-base outline-none"
+                        placeholder="Ex: Informática Sênior">
+                    <button type="button" onclick="salvarAtividadeRapida()"
+                        class="mt-2 w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded-lg text-sm">
+                        + Ativar Evento
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-gray-50 text-center border">
+                <span class="text-xs uppercase font-bold tracking-wider text-gray-400 block mb-1">Status do
+                    Sensor</span>
+                <div id="statusScanner" class="text-base font-bold text-red-600">🔴 Aguardando Atividade</div>
+            </div>
+        </div>
+
+        <!-- COLUNA 2 e 3: CÂMERA CENTRALIZADA (Largura 2/4) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-4 flex flex-col border border-gray-100 h-full">
+            <!-- Container da Câmera com tamanho controlado -->
+            <div class="flex-1 bg-black rounded-xl overflow-hidden shadow-inner relative min-h-0">
+                <video id="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
+
+                <!-- Canvas invisível essencial para a IA funcionar nos bastidores -->
+                <canvas id="canvasAuxiliar" class="hidden"></canvas>
+
+                <!-- Moldura guia virtual centralizada -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div
+                        class="w-64 h-64 md:w-80 md:h-80 border-4 border-dashed border-green-400 opacity-50 rounded-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Resposta Fixo Abaixo da Câmera -->
+            <div id="painelResultado"
+                class="mt-4 p-3 rounded-xl border-2 text-center bg-gray-50 border-gray-200 h-20 flex flex-col justify-center items-center shrink-0">
+                <div id="iconeResultado" class="text-2xl">🤖</div>
+                <h3 id="textoResultado" class="text-lg font-bold text-gray-500">Aproxime seu rosto para registrar</h3>
+            </div>
+        </div>
+
+        <!-- COLUNA 4: HISTÓRICO (Largura 1/4) -->
+        <div class="bg-white rounded-2xl shadow-lg p-5 flex flex-col border border-gray-100 h-full">
+            <h2 class="text-xl font-bold text-blue-800 mb-4 border-b pb-2">🕒 Histórico de Entrada</h2>
+            <div id="listaUltimosRegistros" class="space-y-3 flex-1 overflow-y-auto pr-1">
+                <p class="text-gray-400 text-center py-12 text-sm">Nenhum registro nesta sessão.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasAuxiliar');
+        const selectAtividade = document.getElementById('selectAtividade');
+        const campoNovaAtividade = document.getElementById('campoNovaAtividade');
+        const inputNovaAtividade = document.getElementById('inputNovaAtividade');
+        const statusScanner = document.getElementById('statusScanner');
+        const painelResultado = document.getElementById('painelResultado');
+        const listaUltimosRegistros = document.getElementById('listaUltimosRegistros');
+
+        let idAtividadeAtiva = "";
+        let loopReconhecimento = null;
+        let timestampUltimoReconhecimento = 0;
+        let listaPresencasLocais = [];
+
+        async function iniciarCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 640, height: 480 }
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Erro ao acessar a câmera.");
+            }
+        }
+
+        async function carregarAtividades() {
+            try {
+                const response = await fetch('/api/atividades');
+                const atividades = await response.json();
+
+                selectAtividade.innerHTML = '<option value="">-- Escolha uma atividade --</option>';
+                atividades.forEach(ativ => {
+                    const option = document.createElement('option');
+                    option.value = ativ._id;
+                    option.innerText = ativ.nome;
+                    selectAtividade.appendChild(option);
+                });
+                const optionNova = document.createElement('option');
+                optionNova.value = "NOVA";
+                optionNova.innerText = "➕ [Criar Nova Atividade...]";
+                selectAtividade.appendChild(optionNova);
+            } catch (erro) {
+                selectAtividade.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+
+        function verificarNovaAtividade(valor) {
+            if (valor === "NOVA") {
+                campoNovaAtividade.classList.remove('hidden');
+                pararScannerAutomático();
+            } else {
+                campoNovaAtividade.classList.add('hidden');
+                if (valor) {
+                    idAtividadeAtiva = valor;
+                    iniciarScannerAutomático();
+                } else {
+                    pararScannerAutomático();
+                }
+            }
+        }
+
+        async function salvarAtividadeRapida() {
+            const nome = inputNovaAtividade.value.trim();
+            if (!nome) return;
+
+            try {
+                const response = await fetch('/api/atividades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: nome, categoria: 'Outros' })
+                });
+                const novaAtiv = await response.json();
+                await carregarAtividades();
+                selectAtividade.value = novaAtiv._id;
+                campoNovaAtividade.classList.add('hidden');
+                inputNovaAtividade.value = "";
+                idAtividadeAtiva = novaAtiv._id;
+                iniciarScannerAutomático();
+            } catch (e) {
+                alert("Erro ao criar atividade.");
+            }
+        }
+
+        function iniciarScannerAutomático() {
+            pararScannerAutomático();
+            statusScanner.innerHTML = '🟢 Scanner Ativo';
+            statusScanner.className = 'text-base font-bold text-green-600';
+            loopReconhecimento = setInterval(executarReconhecimentoAutomatico, 1500);
+        }
+
+        function pararScannerAutomático() {
+            if (loopReconhecimento) clearInterval(loopReconhecimento);
+            idAtividadeAtiva = "";
+            statusScanner.innerHTML = '🔴 Aguardando Atividade';
+            statusScanner.className = 'text-base font-bold text-red-600';
+        }
+
+        async function executarReconhecimentoAutomatico() {
+            if (!idAtividadeAtiva) return;
+            if (Date.now() - timestampUltimoReconhecimento < 5000) return;
+
+            try {
+                // Sincroniza as dimensões do vídeo com o canvas interno necessário para mapeamento da IA
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // A IA agora lê a imagem estabilizada no plano do canvas externo com tolerância de corte ideal
+                const detection = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.2 })).withFaceLandmarks().withFaceDescriptor();
+
+                if (!detection) {
+                    document.getElementById('textoResultado').innerText = "Aproxime seu rosto para registrar";
+                    document.getElementById('iconeResultado').innerText = '🤖';
+                    painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-gray-50 border-gray-200 h-20 flex flex-col justify-center items-center";
+                    return;
+                }
+
+                document.getElementById('textoResultado').innerText = "Identificando usuário...";
+
+                // Adicionamos um número dinâmico na URL (?t=...) para quebrar o cache do navegador
+                const response = await fetch(`/api/presencas/reconhecer?t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        atividadeId: idAtividadeAtiva,
+                        faceDescriptor: Array.from(detection.descriptor)
+                    })
+                });
+
+                const resultado = await response.json();
+
+                if (response.ok) {
+                    timestampUltimoReconhecimento = Date.now();
+                    mostrarResultadoVisivel(true, `Bem-vindo(a), ${resultado.nomeUsuario}!`);
+                    adicionarNaBarraLateral(resultado.nomeUsuario);
+                } else {
+                    mostrarResultadoVisivel(false, "Rosto não reconhecido.");
+                }
+
+            } catch (err) {
+                console.error("Erro no processamento:", err);
+            }
+        }
+
+        function mostrarResultadoVisivel(sucesso, mensagem) {
+            if (sucesso) {
+                painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-green-100 border-green-500 text-green-800 h-20 flex flex-col justify-center items-center font-bold text-lg animate-bounce";
+                document.getElementById('iconeResultado').innerText = '✅';
+            } else {
+                painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-red-100 border-red-500 text-red-800 h-20 flex flex-col justify-center items-center font-bold text-lg";
+                document.getElementById('iconeResultado').innerText = '❌';
+            }
+            document.getElementById('textoResultado').innerText = mensagem;
+        }
+
+        function adicionarNaBarraLateral(nome) {
+            const agora = new Date();
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            listaPresencasLocais.unshift({ nome: nome, hora: horaFormatada });
+            if (listaPresencasLocais.length > 10) listaPresencasLocais.pop();
+
+            listaUltimosRegistros.innerHTML = "";
+            listaPresencasLocais.forEach(p => {
+                const item = document.createElement('div');
+                item.className = "bg-blue-50 border-l-4 border-blue-500 p-3 rounded flex justify-between items-center shadow-sm";
+                item.innerHTML = `
+                    <span class="font-bold text-gray-800 truncate max-w-[150px]">${p.nome}</span>
+                    <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-mono">${p.hora}</span>
+                `;
+                listaUltimosRegistros.appendChild(item);
+            });
+        }
+
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]).then(() => {
+            document.getElementById('loadingIA').style.display = 'none';
+            iniciarCamera();
+            carregarAtividades();
+        }).catch((err) => {
+            document.getElementById('loadingIA').innerText = '❌ Falha crítica ao carregar Inteligência Artificial.';
+        });
+    </script>
+</body>
+
+</html>
