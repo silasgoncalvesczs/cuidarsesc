@@ -9,10 +9,12 @@ const { execFileSync } = require('child_process');
 require('dotenv').config();
 
 const atividadeRoutes = require('./routes/atividadeRoutes');
+const categoriaRoutes = require('./routes/categoriaRoutes');
 const idosoRoutes = require('./routes/idosoRoutes');
 const presencaRoutes = require('./routes/presencaRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const relatorioRoutes = require('./routes/relatorioRoutes');
+const backupRoutes = require('./routes/backupRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -27,10 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/atividades', atividadeRoutes);
+app.use('/api/categorias', categoriaRoutes);
 app.use('/api/idosos', idosoRoutes);
 app.use('/api/presencas', presencaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/relatorios', relatorioRoutes);
+app.use('/api/backup', backupRoutes);
 
 function listarIpsLocais() {
     const ips = ['127.0.0.1'];
@@ -99,6 +103,9 @@ mongoose.connect(MONGO_URI)
 
         const { garantirAdminSistema } = require('./utils/adminSistema');
         await garantirAdminSistema();
+
+        const { garantirCategoriasPadrao } = require('./utils/categoriasPadrao');
+        await garantirCategoriasPadrao();
 
         const credenciais = obterCertificados();
 

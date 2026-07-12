@@ -24,12 +24,15 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/cuidar_sesc
       # IP da máquina na rede local (ajuste se necessário)
       - HOST_IP=${HOST_IP:-}
+      # Pasta de backups no servidor (automação / cópia local)
+      - BACKUP_DIR=/app/backups
     env_file:
       - .env
     volumes:
       - ./src:/app/src
       - ./uploads:/app/uploads
       - ./certs:/app/certs
+      - ./backups:/app/backups
     depends_on:
       - mongodb
     restart: unless-stopped

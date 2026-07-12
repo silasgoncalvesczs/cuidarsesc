@@ -492,6 +492,14 @@ svg {
   border-top: 5px solid #2f5d50;
 }
 
+.tile-atividades {
+  border-top: 5px solid #1f6f8b;
+}
+
+.tile-backup {
+  border-top: 5px solid #3d5a80;
+}
+
 /* ——— Login ——— */
 .login-wrap {
   min-height: 100vh;
@@ -733,7 +741,8 @@ body.totem-page {
   padding: 0.55rem 0.7rem;
   border-radius: 12px;
   border: 2px solid var(--line);
-  background: #f7faf8;
+  background: var(--brand-soft);
+  color: var(--ink);
   text-align: center;
   min-height: 56px;
   flex-shrink: 0;
@@ -746,11 +755,21 @@ body.totem-page {
 
 .result-panel strong {
   font-size: 1.05rem;
+  color: inherit;
+}
+
+.result-panel .icon-mask {
+  color: var(--brand);
+  flex-shrink: 0;
 }
 
 .result-ok {
   background: var(--ok-soft);
   border-color: #86d4a8;
+  color: var(--ok);
+}
+
+.result-ok .icon-mask {
   color: var(--ok);
 }
 
@@ -760,10 +779,28 @@ body.totem-page {
   color: var(--danger);
 }
 
+.result-err .icon-mask {
+  color: var(--danger);
+}
+
 .result-info {
   background: var(--accent-soft);
   border-color: #9fcfdb;
-  color: #0f4c58;
+  color: var(--accent);
+}
+
+.result-info .icon-mask {
+  color: var(--accent);
+}
+
+[data-tema="escuro"] .result-panel:not(.result-ok):not(.result-err):not(.result-info) {
+  background: #24352e;
+  border-color: var(--brand);
+  color: #e8efeb;
+}
+
+[data-tema="escuro"] .result-info {
+  color: #9fd4e0;
 }
 
 .status-dot {
@@ -824,7 +861,9 @@ body.totem-page {
 
 .modal-card {
   width: min(520px, 100%);
-  background: #fff;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: 22px;
   padding: 1.8rem;
   text-align: center;
@@ -834,6 +873,11 @@ body.totem-page {
 .modal-card h2 {
   margin: 0.75rem 0 1.4rem;
   font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--ink);
+}
+
+[data-tema="escuro"] .modal-card h2 {
+  color: #f2f7f4;
 }
 
 .modal-actions {
@@ -873,6 +917,11 @@ body.totem-page {
 .badge-ok {
   background: var(--ok-soft);
   color: var(--ok);
+}
+
+.badge-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 
 .badge-off {
@@ -1000,4 +1049,31 @@ body.totem-page {
 
 [data-tema="escuro"] .btn-secondary:hover:not(:disabled) {
   background: #3a8494;
+}
+
+.code-block {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--input-bg);
+  color: var(--ink);
+  font-size: 0.92rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.backup-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
+.backup-list li {
+  margin-bottom: 0.35rem;
+}
+
+.backup-list strong {
+  color: var(--ink);
 }

@@ -12,7 +12,8 @@ const atividadeSchema = new mongoose.Schema({
     },
     categoria: {
         type: String,
-        enum: ['Baile', 'Oficina', 'Reunião', 'Esporte', 'Outros'],
+        required: true,
+        trim: true,
         default: 'Outros'
     },
     ativo: {

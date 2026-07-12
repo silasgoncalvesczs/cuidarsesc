@@ -47,6 +47,12 @@
                     <p>Consultar, cadastrar, ativar ou inativar participantes do programa.</p>
                 </a>
 
+                <a class="tile tile-atividades hidden" href="/atividades.html" id="tileAtividades">
+                    <span class="icon-mask icon-hero" style="color:#1f6f8b;mask-image:url('/icons/calendar.svg');-webkit-mask-image:url('/icons/calendar.svg')"></span>
+                    <h2>Atividades</h2>
+                    <p>Gerenciar atividades e categorias do programa.</p>
+                </a>
+
                 <a class="tile tile-relatorios hidden" href="/relatorios.html" id="tileRelatorios">
                     <span class="icon-mask icon-hero" style="color:#2f5d50;mask-image:url('/icons/report.svg');-webkit-mask-image:url('/icons/report.svg')"></span>
                     <h2>Relatórios</h2>
@@ -57,6 +63,12 @@
                     <span class="icon-mask icon-hero" style="color:#4d5c56;mask-image:url('/icons/users.svg');-webkit-mask-image:url('/icons/users.svg')"></span>
                     <h2>Usuários do Sistema</h2>
                     <p>Gerenciar acessos de administradores, gestores e operadores.</p>
+                </a>
+
+                <a class="tile tile-backup hidden" href="/backup.html" id="tileBackup">
+                    <span class="icon-mask icon-hero" style="color:#3d5a80;mask-image:url('/icons/backup.svg');-webkit-mask-image:url('/icons/backup.svg')"></span>
+                    <h2>Backup</h2>
+                    <p>Baixar ou restaurar cópia de segurança dos dados do sistema.</p>
                 </a>
             </div>
         </main>
@@ -70,9 +82,11 @@
         const usuario = getUsuarioLogado();
         if (usuario && usuario.perfil === 'admin') {
             document.getElementById('tileUsuarios').classList.remove('hidden');
+            document.getElementById('tileBackup').classList.remove('hidden');
         }
         if (usuario && (usuario.perfil === 'admin' || usuario.perfil === 'gestor')) {
             document.getElementById('tileRelatorios').classList.remove('hidden');
+            document.getElementById('tileAtividades').classList.remove('hidden');
         }
         if (usuario && usuario.perfil === 'operador') {
             document.getElementById('tileCadastro').classList.add('hidden');

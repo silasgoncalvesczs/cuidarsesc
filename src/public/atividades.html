@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividades - CUIDAR SESC</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/index.html">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Atividades</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="page">
+            <div class="tabs" style="grid-template-columns:1fr 1fr;margin-top:0">
+                <button type="button" class="tab-btn active" id="tabAtividades" onclick="trocarAba('atividades')">Atividades</button>
+                <button type="button" class="tab-btn" id="tabCategorias" onclick="trocarAba('categorias')">Categorias</button>
+            </div>
+
+            <section id="painelAtividades">
+                <section class="panel mb-2">
+                    <div class="actions" style="margin-top:0;align-items:center">
+                        <h2 class="section-title" style="margin:0" id="tituloAtividade">Nova atividade</h2>
+                        <button type="button" id="btnCancelarAtividade" class="btn btn-ghost hidden" onclick="cancelarEdicaoAtividade()">Cancelar edição</button>
+                    </div>
+
+                    <form id="formAtividade" onsubmit="salvarAtividade(event)" class="form-grid two">
+                        <div class="field">
+                            <label for="nomeAtividade">Nome</label>
+                            <input type="text" id="nomeAtividade" required maxlength="120">
+                        </div>
+                        <div class="field">
+                            <label for="categoriaAtividade">Categoria</label>
+                            <select id="categoriaAtividade" required></select>
+                        </div>
+                        <div class="field full">
+                            <label for="descricaoAtividade">Descrição (opcional)</label>
+                            <textarea id="descricaoAtividade" rows="2" maxlength="500"></textarea>
+                        </div>
+                        <div id="msgAtividade" class="banner hidden full"></div>
+                        <div class="full">
+                            <button type="submit" class="btn btn-primary" id="btnSalvarAtividade">Criar atividade</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <div class="toolbar">
+                        <div class="field">
+                            <label for="buscaAtividade">Buscar</label>
+                            <input type="search" id="buscaAtividade" placeholder="Nome da atividade...">
+                        </div>
+                        <div class="field shrink">
+                            <label for="filtroStatusAtividade">Status</label>
+                            <select id="filtroStatusAtividade">
+                                <option value="todas">Todas</option>
+                                <option value="true">Ativas</option>
+                                <option value="false">Inativas</option>
+                            </select>
+                        </div>
+                        <div class="field shrink">
+                            <label for="filtroCategoriaLista">Categoria</label>
+                            <select id="filtroCategoriaLista">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="carregarAtividades()">Filtrar</button>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Categoria</th>
+                                    <th>Descrição</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaAtividades">
+                                <tr><td colspan="5" class="center">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section id="painelCategorias" class="hidden">
+                <section class="panel mb-2">
+                    <div class="actions" style="margin-top:0;align-items:center">
+                        <h2 class="section-title" style="margin:0" id="tituloCategoria">Nova categoria</h2>
+                        <button type="button" id="btnCancelarCategoria" class="btn btn-ghost hidden" onclick="cancelarEdicaoCategoria()">Cancelar edição</button>
+                    </div>
+
+                    <form id="formCategoria" onsubmit="salvarCategoria(event)" class="form-grid two">
+                        <div class="field">
+                            <label for="nomeCategoria">Nome</label>
+                            <input type="text" id="nomeCategoria" required maxlength="80">
+                        </div>
+                        <div id="msgCategoria" class="banner hidden full"></div>
+                        <div class="full">
+                            <button type="submit" class="btn btn-primary" id="btnSalvarCategoria">Criar categoria</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <div class="table-wrap">
+                        <table class="data">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaCategorias">
+                                <tr><td colspan="3" class="center">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin', 'gestor']);
+        }
+
+        let idAtividadeEditando = null;
+        let idCategoriaEditando = null;
+        let categoriasCache = [];
+
+        function escapeHtml(texto) {
+            return String(texto || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function mostrarMsg(id, tipo, texto) {
+            const el = document.getElementById(id);
+            el.className = 'banner full ' + (tipo === 'ok' ? 'banner-ok' : 'banner-danger');
+            el.innerText = texto;
+            el.classList.remove('hidden');
+        }
+
+        function trocarAba(aba) {
+            const isAtiv = aba === 'atividades';
+            document.getElementById('painelAtividades').classList.toggle('hidden', !isAtiv);
+            document.getElementById('painelCategorias').classList.toggle('hidden', isAtiv);
+            document.getElementById('tabAtividades').classList.toggle('active', isAtiv);
+            document.getElementById('tabCategorias').classList.toggle('active', !isAtiv);
+            if (isAtiv) carregarAtividades();
+            else carregarCategorias();
+        }
+
+        async function carregarSelectCategorias() {
+            const response = await fetchAutenticado('/api/categorias?ativo=true');
+            const data = await response.json().catch(function () { return []; });
+            categoriasCache = Array.isArray(data) ? data : [];
+
+            const selects = [
+                document.getElementById('categoriaAtividade'),
+                document.getElementById('filtroCategoriaLista')
+            ];
+
+            const optionsAtivas = categoriasCache.map(function (c) {
+                return '<option value="' + escapeHtml(c.nome) + '">' + escapeHtml(c.nome) + '</option>';
+            }).join('');
+
+            document.getElementById('categoriaAtividade').innerHTML =
+                '<option value="">Selecione...</option>' + optionsAtivas;
+
+            document.getElementById('filtroCategoriaLista').innerHTML =
+                '<option value="">Todas</option>' + optionsAtivas;
+        }
+
+        async function carregarAtividades() {
+            const tbody = document.getElementById('listaAtividades');
+            tbody.innerHTML = '<tr><td colspan="5" class="center">Carregando...</td></tr>';
+
+            const params = new URLSearchParams({ todas: 'true' });
+            const status = document.getElementById('filtroStatusAtividade').value;
+            const busca = document.getElementById('buscaAtividade').value.trim();
+            const categoria = document.getElementById('filtroCategoriaLista').value;
+
+            if (status === 'true' || status === 'false') params.set('ativo', status);
+            if (busca) params.set('busca', busca);
+            if (categoria) params.set('categoria', categoria);
+
+            try {
+                const response = await fetchAutenticado('/api/atividades?' + params.toString());
+                const lista = await response.json();
+                if (!response.ok || !Array.isArray(lista)) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="center">Erro ao carregar.</td></tr>';
+                    return;
+                }
+                if (!lista.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="center">Nenhuma atividade encontrada.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = lista.map(function (a) {
+                    const ativo = a.ativo !== false;
+                    const rowClass = ativo ? '' : ' class="row-inactive"';
+                    const badge = ativo
+                        ? '<span class="badge badge-ok">Ativa</span>'
+                        : '<span class="badge badge-warn">Inativa</span>';
+                    const btnStatus = ativo
+                        ? '<button type="button" class="btn btn-ghost btn-sm" onclick="alternarStatusAtividade(\'' + a._id + '\', false)">Inativar</button>'
+                        : '<button type="button" class="btn btn-success btn-sm" onclick="alternarStatusAtividade(\'' + a._id + '\', true)">Ativar</button>';
+
+                    return '<tr' + rowClass + '>' +
+                        '<td>' + escapeHtml(a.nome) + '</td>' +
+                        '<td>' + escapeHtml(a.categoria) + '</td>' +
+                        '<td>' + escapeHtml(a.descricao || '—') + '</td>' +
+                        '<td>' + badge + '</td>' +
+                        '<td><div class="actions-cell">' +
+                        '<button type="button" class="btn btn-secondary btn-sm" onclick="editarAtividade(\'' + a._id + '\')">Editar</button>' +
+                        btnStatus +
+                        '<button type="button" class="btn btn-danger-outline btn-sm" onclick="excluirAtividade(\'' + a._id + '\', \'' + escapeHtml(a.nome).replace(/'/g, '\\&#39;') + '\')">Excluir</button>' +
+                        '</div></td></tr>';
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="center">Erro de conexão.</td></tr>';
+            }
+        }
+
+        function cancelarEdicaoAtividade() {
+            idAtividadeEditando = null;
+            document.getElementById('formAtividade').reset();
+            document.getElementById('tituloAtividade').innerText = 'Nova atividade';
+            document.getElementById('btnSalvarAtividade').innerText = 'Criar atividade';
+            document.getElementById('btnCancelarAtividade').classList.add('hidden');
+            document.getElementById('msgAtividade').classList.add('hidden');
+        }
+
+        async function editarAtividade(id) {
+            const response = await fetchAutenticado('/api/atividades/' + id);
+            const a = await response.json().catch(function () { return null; });
+            if (!response.ok || !a) {
+                mostrarMsg('msgAtividade', 'erro', (a && a.erro) || 'Não foi possível carregar a atividade.');
+                return;
+            }
+
+            idAtividadeEditando = a._id;
+            document.getElementById('nomeAtividade').value = a.nome || '';
+            document.getElementById('descricaoAtividade').value = a.descricao || '';
+
+            const select = document.getElementById('categoriaAtividade');
+            if (a.categoria && ![].slice.call(select.options).some(function (o) { return o.value === a.categoria; })) {
+                const opt = document.createElement('option');
+                opt.value = a.categoria;
+                opt.textContent = a.categoria + ' (inativa)';
+                select.appendChild(opt);
+            }
+            select.value = a.categoria || '';
+
+            document.getElementById('tituloAtividade').innerText = 'Editar atividade';
+            document.getElementById('btnSalvarAtividade').innerText = 'Salvar alterações';
+            document.getElementById('btnCancelarAtividade').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function salvarAtividade(event) {
+            event.preventDefault();
+            const payload = {
+                nome: document.getElementById('nomeAtividade').value.trim(),
+                categoria: document.getElementById('categoriaAtividade').value,
+                descricao: document.getElementById('descricaoAtividade').value.trim()
+            };
+            const btn = document.getElementById('btnSalvarAtividade');
+            btn.disabled = true;
+
+            try {
+                const url = idAtividadeEditando ? '/api/atividades/' + idAtividadeEditando : '/api/atividades';
+                const method = idAtividadeEditando ? 'PUT' : 'POST';
+                const response = await fetchAutenticado(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    mostrarMsg('msgAtividade', 'erro', data.erro || 'Falha ao salvar.');
+                    return;
+                }
+                const eraEdicao = Boolean(idAtividadeEditando);
+                cancelarEdicaoAtividade();
+                mostrarMsg('msgAtividade', 'ok', eraEdicao ? 'Atividade atualizada.' : 'Atividade criada.');
+                carregarAtividades();
+            } catch (e) {
+                mostrarMsg('msgAtividade', 'erro', 'Erro de conexão.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function alternarStatusAtividade(id, ativo) {
+            const verbo = ativo ? 'ativar' : 'inativar';
+            if (!confirm('Deseja ' + verbo + ' esta atividade?')) return;
+            const response = await fetchAutenticado('/api/atividades/' + id + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ativo: ativo })
+            });
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                alert(data.erro || 'Não foi possível alterar o status.');
+                return;
+            }
+            carregarAtividades();
+        }
+
+        async function excluirAtividade(id, nome) {
+            if (!confirm('Excluir a atividade "' + nome + '"? Só é permitido se não houver presenças.')) return;
+            const response = await fetchAutenticado('/api/atividades/' + id, { method: 'DELETE' });
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                alert(data.erro || 'Não foi possível excluir.');
+                return;
+            }
+            if (idAtividadeEditando === id) cancelarEdicaoAtividade();
+            carregarAtividades();
+        }
+
+        async function carregarCategorias() {
+            const tbody = document.getElementById('listaCategorias');
+            tbody.innerHTML = '<tr><td colspan="3" class="center">Carregando...</td></tr>';
+            try {
+                const response = await fetchAutenticado('/api/categorias');
+                const lista = await response.json();
+                if (!response.ok || !Array.isArray(lista)) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="center">Erro ao carregar.</td></tr>';
+                    return;
+                }
+                if (!lista.length) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="center">Nenhuma categoria.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = lista.map(function (c) {
+                    const ativo = c.ativo !== false;
+                    const rowClass = ativo ? '' : ' class="row-inactive"';
+                    const badge = ativo
+                        ? '<span class="badge badge-ok">Ativa</span>'
+                        : '<span class="badge badge-warn">Inativa</span>';
+                    const btnStatus = ativo
+                        ? '<button type="button" class="btn btn-ghost btn-sm" onclick="alternarStatusCategoria(\'' + c._id + '\', false)">Inativar</button>'
+                        : '<button type="button" class="btn btn-success btn-sm" onclick="alternarStatusCategoria(\'' + c._id + '\', true)">Ativar</button>';
+
+                    return '<tr' + rowClass + '>' +
+                        '<td>' + escapeHtml(c.nome) + '</td>' +
+                        '<td>' + badge + '</td>' +
+                        '<td><div class="actions-cell">' +
+                        '<button type="button" class="btn btn-secondary btn-sm" onclick="editarCategoria(\'' + c._id + '\', \'' + escapeHtml(c.nome).replace(/'/g, '') + '\')">Editar</button>' +
+                        btnStatus +
+                        '<button type="button" class="btn btn-danger-outline btn-sm" onclick="excluirCategoria(\'' + c._id + '\', \'' + escapeHtml(c.nome).replace(/'/g, '') + '\')">Excluir</button>' +
+                        '</div></td></tr>';
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="3" class="center">Erro de conexão.</td></tr>';
+            }
+        }
+
+        function cancelarEdicaoCategoria() {
+            idCategoriaEditando = null;
+            document.getElementById('formCategoria').reset();
+            document.getElementById('tituloCategoria').innerText = 'Nova categoria';
+            document.getElementById('btnSalvarCategoria').innerText = 'Criar categoria';
+            document.getElementById('btnCancelarCategoria').classList.add('hidden');
+            document.getElementById('msgCategoria').classList.add('hidden');
+        }
+
+        function editarCategoria(id, nome) {
+            idCategoriaEditando = id;
+            document.getElementById('nomeCategoria').value = nome;
+            document.getElementById('tituloCategoria').innerText = 'Editar categoria';
+            document.getElementById('btnSalvarCategoria').innerText = 'Salvar alterações';
+            document.getElementById('btnCancelarCategoria').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function salvarCategoria(event) {
+            event.preventDefault();
+            const payload = { nome: document.getElementById('nomeCategoria').value.trim() };
+            const btn = document.getElementById('btnSalvarCategoria');
+            btn.disabled = true;
+            try {
+                const url = idCategoriaEditando ? '/api/categorias/' + idCategoriaEditando : '/api/categorias';
+                const method = idCategoriaEditando ? 'PUT' : 'POST';
+                const response = await fetchAutenticado(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    mostrarMsg('msgCategoria', 'erro', data.erro || 'Falha ao salvar.');
+                    return;
+                }
+                const eraEdicao = Boolean(idCategoriaEditando);
+                cancelarEdicaoCategoria();
+                mostrarMsg('msgCategoria', 'ok', eraEdicao ? 'Categoria atualizada.' : 'Categoria criada.');
+                await carregarSelectCategorias();
+                carregarCategorias();
+            } catch (e) {
+                mostrarMsg('msgCategoria', 'erro', 'Erro de conexão.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function alternarStatusCategoria(id, ativo) {
+            const verbo = ativo ? 'ativar' : 'inativar';
+            if (!confirm('Deseja ' + verbo + ' esta categoria?')) return;
+            const response = await fetchAutenticado('/api/categorias/' + id + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ativo: ativo })
+            });
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                alert(data.erro || 'Não foi possível alterar o status.');
+                return;
+            }
+            await carregarSelectCategorias();
+            carregarCategorias();
+        }
+
+        async function excluirCategoria(id, nome) {
+            if (!confirm('Excluir a categoria "' + nome + '"? Só é permitido se não houver atividades nela.')) return;
+            const response = await fetchAutenticado('/api/categorias/' + id, { method: 'DELETE' });
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                alert(data.erro || 'Não foi possível excluir.');
+                return;
+            }
+            if (idCategoriaEditando === id) cancelarEdicaoCategoria();
+            await carregarSelectCategorias();
+            carregarCategorias();
+        }
+
+        (async function init() {
+            await carregarSelectCategorias();
+            carregarAtividades();
+        })();
+    </script>
+</body>
+</html>

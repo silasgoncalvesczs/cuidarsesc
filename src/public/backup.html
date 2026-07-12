@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup - CUIDAR SESC</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/index.html">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Backup e Restauração</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="page page-narrow">
+            <section class="panel mb-2">
+                <h2 class="section-title">Gerar backup</h2>
+                <p class="lead" style="margin-bottom:1rem">
+                    Inclui usuários, participantes (com biometria), atividades e presenças.
+                    Ao baixar, você escolhe a pasta e o nome do arquivo no seu computador.
+                </p>
+                <div class="actions" style="margin-top:0">
+                    <button type="button" class="btn btn-primary" id="btnBaixar" onclick="baixarBackup()">
+                        Baixar backup (.zip)
+                    </button>
+                    <button type="button" class="btn btn-secondary hidden" id="btnServidor" onclick="salvarNoServidor()">
+                        Salvar na pasta do servidor
+                    </button>
+                </div>
+                <p id="ajudaServidor" class="lead hidden" style="margin-top:0.85rem;font-size:0.98rem"></p>
+                <div id="msgBackup" class="banner hidden" style="margin-top:1rem"></div>
+            </section>
+
+            <section class="panel mb-2">
+                <h2 class="section-title">Restaurar backup</h2>
+                <p class="lead" style="margin-bottom:1rem">
+                    Substitui os dados atuais pelos do arquivo. Esta ação não pode ser desfeita.
+                    Faça um backup recente antes de restaurar.
+                </p>
+                <form id="formRestore" onsubmit="restaurarBackup(event)" class="form-grid">
+                    <div class="field">
+                        <label for="arquivoBackup">Arquivo .zip</label>
+                        <input type="file" id="arquivoBackup" accept=".zip,application/zip" required>
+                    </div>
+                    <div class="field">
+                        <label for="confirmacao">Digite RESTAURAR para confirmar</label>
+                        <input type="text" id="confirmacao" placeholder="RESTAURAR" autocomplete="off" required>
+                    </div>
+                    <div id="msgRestore" class="banner hidden"></div>
+                    <div>
+                        <button type="submit" class="btn btn-danger" id="btnRestore">Restaurar agora</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2 class="section-title">Automação</h2>
+                <p class="lead" style="margin-bottom:0.75rem">
+                    Os backups manuais já permitem escolher onde salvar no PC.
+                    Para agendar (diário/semanal), use a pasta do servidor e um agendador do Linux:
+                </p>
+                <pre class="code-block">docker compose exec app node src/scripts/backupLocal.js</pre>
+                <p class="lead" style="margin-top:0.75rem;font-size:0.98rem">
+                    Exemplo de cron (todo dia às 2h), na máquina host, com o projeto como pasta atual.
+                </p>
+                <div id="listaServidor" class="hidden" style="margin-top:1rem">
+                    <h3 class="section-title" style="font-size:1.1rem">Backups na pasta do servidor</h3>
+                    <ul id="ulBackupsServidor" class="backup-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin']);
+        }
+
+        function mostrarBanner(id, texto, tipo) {
+            const el = document.getElementById(id);
+            el.textContent = texto;
+            el.className = 'banner ' + (tipo === 'ok' ? 'banner-ok' : tipo === 'info' ? 'banner-info' : 'banner-danger');
+            el.classList.remove('hidden');
+        }
+
+        function formatarContagens(contagens) {
+            if (!contagens) return '';
+            return Object.keys(contagens).map(function (k) {
+                return k + ': ' + contagens[k];
+            }).join(' · ');
+        }
+
+        async function carregarInfo() {
+            const response = await fetchAutenticado('/api/backup/info');
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) return;
+
+            const btnServidor = document.getElementById('btnServidor');
+            const ajuda = document.getElementById('ajudaServidor');
+            if (data.pastaServidorConfigurada) {
+                btnServidor.classList.remove('hidden');
+                ajuda.classList.remove('hidden');
+                ajuda.textContent = 'Pasta do servidor: ' + data.pastaServidor;
+                const lista = document.getElementById('listaServidor');
+                const ul = document.getElementById('ulBackupsServidor');
+                if (data.backupsNoServidor && data.backupsNoServidor.length) {
+                    lista.classList.remove('hidden');
+                    ul.innerHTML = data.backupsNoServidor.map(function (b) {
+                        const dataMod = new Date(b.modificadoEm).toLocaleString('pt-BR');
+                        const mb = (b.tamanho / (1024 * 1024)).toFixed(2);
+                        return '<li><strong>' + b.nome + '</strong> — ' + mb + ' MB — ' + dataMod + '</li>';
+                    }).join('');
+                }
+            } else {
+                ajuda.classList.remove('hidden');
+                ajuda.textContent = 'Para salvar também no servidor, configure BACKUP_DIR (já padrão no Docker: /app/backups).';
+            }
+        }
+
+        async function baixarBackup() {
+            const btn = document.getElementById('btnBaixar');
+            btn.disabled = true;
+            mostrarBanner('msgBackup', 'Gerando backup...', 'info');
+            try {
+                const response = await fetchAutenticado('/api/backup/download');
+                if (!response.ok) {
+                    const data = await response.json().catch(function () { return {}; });
+                    mostrarBanner('msgBackup', data.erro || 'Falha ao gerar backup.', 'erro');
+                    return;
+                }
+
+                const blob = await response.blob();
+                const nome =
+                    response.headers.get('X-Backup-Filename') ||
+                    'cuidar-sesc-backup.zip';
+
+                let contagensTxt = '';
+                try {
+                    contagensTxt = formatarContagens(JSON.parse(response.headers.get('X-Backup-Counts') || '{}'));
+                } catch (_) {}
+
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: nome,
+                        types: [{
+                            description: 'Backup CUIDAR SESC',
+                            accept: { 'application/zip': ['.zip'] }
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = nome;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }
+
+                mostrarBanner(
+                    'msgBackup',
+                    'Backup salvo.' + (contagensTxt ? ' (' + contagensTxt + ')' : ''),
+                    'ok'
+                );
+            } catch (e) {
+                if (e && e.name === 'AbortError') {
+                    mostrarBanner('msgBackup', 'Download cancelado.', 'info');
+                } else {
+                    mostrarBanner('msgBackup', 'Erro ao baixar o backup.', 'erro');
+                }
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function salvarNoServidor() {
+            const btn = document.getElementById('btnServidor');
+            btn.disabled = true;
+            mostrarBanner('msgBackup', 'Salvando na pasta do servidor...', 'info');
+            try {
+                const response = await fetchAutenticado('/api/backup/servidor', { method: 'POST' });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    mostrarBanner('msgBackup', data.erro || 'Falha ao salvar no servidor.', 'erro');
+                    return;
+                }
+                mostrarBanner(
+                    'msgBackup',
+                    'Salvo no servidor: ' + data.nomeArquivo +
+                    (data.contagens ? ' (' + formatarContagens(data.contagens) + ')' : ''),
+                    'ok'
+                );
+                carregarInfo();
+            } catch (e) {
+                mostrarBanner('msgBackup', 'Erro de conexão ao salvar no servidor.', 'erro');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function restaurarBackup(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnRestore');
+            const arquivo = document.getElementById('arquivoBackup').files[0];
+            const confirmacao = document.getElementById('confirmacao').value.trim();
+
+            if (!arquivo) {
+                mostrarBanner('msgRestore', 'Selecione o arquivo de backup.', 'erro');
+                return;
+            }
+
+            if (!confirm('Isso apaga os dados atuais e restaura o backup. Continuar?')) {
+                return;
+            }
+
+            const form = new FormData();
+            form.append('arquivo', arquivo);
+            form.append('confirmacao', confirmacao);
+
+            btn.disabled = true;
+            mostrarBanner('msgRestore', 'Restaurando... aguarde.', 'info');
+            try {
+                const response = await fetchAutenticado('/api/backup/restore', {
+                    method: 'POST',
+                    body: form
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    mostrarBanner('msgRestore', data.erro || 'Falha na restauração.', 'erro');
+                    return;
+                }
+                document.getElementById('formRestore').reset();
+                mostrarBanner(
+                    'msgRestore',
+                    (data.mensagem || 'Restaurado.') +
+                    (data.contagens ? ' (' + formatarContagens(data.contagens) + ')' : ''),
+                    'ok'
+                );
+            } catch (e) {
+                mostrarBanner('msgRestore', 'Erro de conexão ao restaurar.', 'erro');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        carregarInfo();
+    </script>
+</body>
+</html>

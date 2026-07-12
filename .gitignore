@@ -7,6 +7,10 @@ data/
 # Uploads de usuários
 uploads/
 
+# Backups gerados no servidor
+backups/*
+!backups/.gitkeep
+
 # Variáveis de ambiente
 .env
 .env.local
