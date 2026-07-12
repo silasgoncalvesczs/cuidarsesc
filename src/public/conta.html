@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta - CUIDAR SESC</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/index.html">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Minha Conta</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="page page-narrow">
+            <section class="panel mb-2">
+                <h2 class="section-title">Seus dados</h2>
+                <dl class="conta-dados">
+                    <div>
+                        <dt>Nome</dt>
+                        <dd id="dadoNome">—</dd>
+                    </div>
+                    <div>
+                        <dt>E-mail</dt>
+                        <dd id="dadoEmail">—</dd>
+                    </div>
+                    <div>
+                        <dt>Perfil</dt>
+                        <dd id="dadoPerfil">—</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="panel">
+                <h2 class="section-title">Alterar senha</h2>
+                <p class="lead" style="margin-bottom:1rem">Use a senha atual e defina uma nova com no mínimo 6 caracteres.</p>
+
+                <form id="formSenha" onsubmit="alterarSenha(event)" class="form-grid">
+                    <div class="field">
+                        <label for="senhaAtual">Senha atual</label>
+                        <input type="password" id="senhaAtual" required autocomplete="current-password">
+                    </div>
+                    <div class="field">
+                        <label for="senhaNova">Nova senha</label>
+                        <input type="password" id="senhaNova" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <div class="field">
+                        <label for="senhaNovaConfirma">Confirmar nova senha</label>
+                        <input type="password" id="senhaNovaConfirma" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <div id="mensagemSenha" class="banner hidden"></div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarSenha">Salvar nova senha</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (typeof exigirLogin === 'function') {
+            exigirLogin();
+        }
+
+        const rotulosPerfil = {
+            admin: 'Administrador',
+            gestor: 'Gestor',
+            operador: 'Operador'
+        };
+
+        function carregarDados() {
+            const usuario = getUsuarioLogado() || {};
+            document.getElementById('dadoNome').textContent = usuario.nome || '—';
+            document.getElementById('dadoEmail').textContent = usuario.email || '—';
+            document.getElementById('dadoPerfil').textContent = rotulosPerfil[usuario.perfil] || usuario.perfil || '—';
+        }
+
+        function mostrarMensagem(texto, tipo) {
+            const el = document.getElementById('mensagemSenha');
+            el.textContent = texto;
+            el.className = 'banner ' + (tipo === 'ok' ? 'banner-ok' : 'banner-danger');
+            el.classList.remove('hidden');
+        }
+
+        async function alterarSenha(event) {
+            event.preventDefault();
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const senhaNova = document.getElementById('senhaNova').value;
+            const senhaNovaConfirma = document.getElementById('senhaNovaConfirma').value;
+            const btn = document.getElementById('btnSalvarSenha');
+
+            if (senhaNova !== senhaNovaConfirma) {
+                mostrarMensagem('A confirmação não confere com a nova senha.', 'erro');
+                return;
+            }
+
+            btn.disabled = true;
+            try {
+                const response = await fetchAutenticado('/api/usuarios/me/senha', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senhaAtual, senhaNova })
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    mostrarMensagem(data.erro || 'Não foi possível alterar a senha.', 'erro');
+                    return;
+                }
+                document.getElementById('formSenha').reset();
+                mostrarMensagem(data.mensagem || 'Senha alterada com sucesso.', 'ok');
+            } catch (e) {
+                mostrarMensagem('Erro de conexão ao alterar a senha.', 'erro');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>

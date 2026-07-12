@@ -1,154 +1,319 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuários - CUIDAR SESC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0fdf4;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
 </head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/index.html">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Usuários do Sistema</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
 
-<body class="text-gray-800">
-
-    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
-        <a href="/index.html" class="text-white hover:text-green-200 font-bold text-xl">&larr; Voltar</a>
-        <h1 class="text-2xl font-bold tracking-wide">Gerenciar Usuários</h1>
-        <button onclick="logout()" class="text-white hover:text-red-200 font-bold">Sair</button>
-    </nav>
-
-    <main class="container mx-auto mt-8 p-4 max-w-4xl">
-
-        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <h2 class="text-xl font-bold text-gray-700 mb-6">Novo Usuário</h2>
-
-            <form id="formNovoUsuario" onsubmit="criarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-gray-700 font-bold mb-1">Nome</label>
-                    <input type="text" id="nome" required class="w-full px-3 py-2 rounded-lg border border-gray-300">
+        <main class="page">
+            <section class="panel mb-2">
+                <div class="actions" style="margin-top:0;align-items:center">
+                    <h2 class="section-title" style="margin:0" id="tituloFormulario">Novo usuário</h2>
+                    <button type="button" id="btnCancelarEdicao" class="btn btn-ghost hidden" onclick="cancelarEdicao()">Cancelar edição</button>
                 </div>
-                <div>
-                    <label class="block text-gray-700 font-bold mb-1">E-mail</label>
-                    <input type="email" id="email" required class="w-full px-3 py-2 rounded-lg border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-gray-700 font-bold mb-1">Senha</label>
-                    <input type="password" id="senha" required minlength="6"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-gray-700 font-bold mb-1">Perfil</label>
-                    <select id="perfil" required class="w-full px-3 py-2 rounded-lg border border-gray-300">
-                        <option value="operador">Operador (totem)</option>
-                        <option value="gestor">Gestor</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <div id="mensagem" class="hidden md:col-span-2 p-3 rounded-lg text-sm"></div>
-                <div class="md:col-span-2">
-                    <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">
-                        Criar Usuário
-                    </button>
-                </div>
-            </form>
-        </div>
 
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-            <h2 class="text-xl font-bold text-gray-700 mb-4">Usuários Cadastrados</h2>
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="border-b">
-                        <th class="pb-2">Nome</th>
-                        <th class="pb-2">E-mail</th>
-                        <th class="pb-2">Perfil</th>
-                    </tr>
-                </thead>
-                <tbody id="listaUsuarios"></tbody>
-            </table>
-        </div>
+                <form id="formUsuario" onsubmit="salvarUsuario(event)" class="form-grid two">
+                    <div class="field">
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" required>
+                    </div>
+                    <div class="field">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="field">
+                        <label for="senha" id="labelSenha">Senha</label>
+                        <input type="password" id="senha" minlength="6" required>
+                        <small id="ajudaSenha" class="hidden" style="color:var(--muted)">Deixe em branco para manter a senha atual.</small>
+                    </div>
+                    <div class="field">
+                        <label for="perfil">Perfil</label>
+                        <select id="perfil" required>
+                            <option value="operador">Operador (totem)</option>
+                            <option value="gestor">Gestor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div id="mensagem" class="banner hidden full"></div>
+                    <div class="full">
+                        <button type="submit" class="btn btn-primary" id="btnSalvar">Criar usuário</button>
+                    </div>
+                </form>
+            </section>
 
-    </main>
+            <section class="panel">
+                <h2 class="section-title">Usuários cadastrados</h2>
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Perfil</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaUsuarios">
+                            <tr><td colspan="5" class="center">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script src="/js/auth.js"></script>
     <script>
-        // O ideal é ter a função exigindo perfil, garantindo que auth.js lidou com ela
         if (typeof exigirPerfil === 'function') {
             exigirPerfil(['admin']);
         }
 
+        const formUsuario = document.getElementById('formUsuario');
+        const campoSenha = document.getElementById('senha');
+        const labelSenha = document.getElementById('labelSenha');
+        const ajudaSenha = document.getElementById('ajudaSenha');
+        const btnSalvar = document.getElementById('btnSalvar');
+        const btnCancelarEdicao = document.getElementById('btnCancelarEdicao');
+        const tituloFormulario = document.getElementById('tituloFormulario');
+        const mensagem = document.getElementById('mensagem');
+
+        let idEditando = null;
+        const usuarioLogado = getUsuarioLogado();
+
+        function escapeHtml(texto) {
+            return String(texto || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function mostrarMensagem(tipo, texto) {
+            mensagem.className = 'banner full ' + (tipo === 'ok' ? 'banner-ok' : 'banner-danger');
+            mensagem.innerText = texto;
+            mensagem.classList.remove('hidden');
+        }
+
+        function editarUsuario(u) {
+            idEditando = u._id;
+            tituloFormulario.innerText = u.protegido ? 'Editar admin do sistema' : 'Editar usuário';
+            btnSalvar.innerText = 'Salvar alterações';
+            document.getElementById('nome').value = u.nome || '';
+            document.getElementById('email').value = u.email || '';
+            document.getElementById('perfil').value = u.perfil || 'operador';
+            document.getElementById('email').disabled = Boolean(u.protegido);
+            document.getElementById('perfil').disabled = Boolean(u.protegido);
+            campoSenha.value = '';
+            campoSenha.required = false;
+            labelSenha.innerText = 'Nova senha (opcional)';
+            ajudaSenha.classList.remove('hidden');
+            btnCancelarEdicao.classList.remove('hidden');
+            mensagem.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function modoCriacao() {
+            idEditando = null;
+            formUsuario.reset();
+            tituloFormulario.innerText = 'Novo usuário';
+            btnSalvar.innerText = 'Criar usuário';
+            labelSenha.innerText = 'Senha';
+            campoSenha.required = true;
+            ajudaSenha.classList.add('hidden');
+            btnCancelarEdicao.classList.add('hidden');
+            document.getElementById('email').disabled = false;
+            document.getElementById('perfil').disabled = false;
+            mensagem.classList.add('hidden');
+        }
+
+        function cancelarEdicao() {
+            modoCriacao();
+        }
+
         async function carregarUsuarios() {
+            const tbody = document.getElementById('listaUsuarios');
+            tbody.innerHTML = '<tr><td colspan="5" class="center">Carregando...</td></tr>';
+
             try {
                 const response = await fetchAutenticado('/api/usuarios');
                 const usuarios = await response.json();
-                const tbody = document.getElementById('listaUsuarios');
                 tbody.innerHTML = '';
 
-                if (Array.isArray(usuarios)) {
-                    usuarios.forEach(u => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'border-b';
-                        tr.innerHTML = `
-                            <td class="py-2">${u.nome}</td>
-                            <td class="py-2">${u.email}</td>
-                            <td class="py-2 capitalize">${u.perfil}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                if (!Array.isArray(usuarios) || usuarios.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="center">Nenhum usuário cadastrado.</td></tr>';
+                    return;
                 }
+
+                usuarios.forEach((u) => {
+                    const tr = document.createElement('tr');
+                    if (!u.ativo) tr.className = 'row-inactive';
+                    const souEu = usuarioLogado && String(usuarioLogado._id) === String(u._id);
+                    const statusHtml = u.ativo
+                        ? '<span class="badge badge-ok">Ativo</span>'
+                        : '<span class="badge badge-off">Inativo</span>';
+                    const statusLabel = u.ativo ? 'Inativar' : 'Ativar';
+                    const badgeSistema = u.protegido
+                        ? ' <span class="badge badge-ok" title="Admin protegido do .env">Sistema</span>'
+                        : '';
+
+                    let acoes = '<button type="button" class="btn btn-secondary btn-sm" data-acao="editar">Editar</button>';
+                    if (!u.protegido) {
+                        acoes +=
+                            '<button type="button" class="btn btn-ghost btn-sm" data-acao="status">' + statusLabel + '</button>' +
+                            '<button type="button" class="btn btn-danger-outline btn-sm" data-acao="excluir">Excluir</button>';
+                    }
+
+                    tr.innerHTML =
+                        '<td>' + escapeHtml(u.nome) + (souEu ? ' <small>(você)</small>' : '') + badgeSistema + '</td>' +
+                        '<td>' + escapeHtml(u.email) + '</td>' +
+                        '<td style="text-transform:capitalize">' + escapeHtml(u.perfil) + '</td>' +
+                        '<td>' + statusHtml + '</td>' +
+                        '<td><div class="actions-cell">' + acoes + '</div></td>';
+
+                    tr.querySelector('[data-acao="editar"]').addEventListener('click', () => editarUsuario(u));
+                    const btnStatus = tr.querySelector('[data-acao="status"]');
+                    const btnExcluir = tr.querySelector('[data-acao="excluir"]');
+                    if (btnStatus) btnStatus.addEventListener('click', () => alternarStatus(u));
+                    if (btnExcluir) btnExcluir.addEventListener('click', () => excluirUsuario(u));
+                    tbody.appendChild(tr);
+                });
             } catch (error) {
-                console.error('Erro ao carregar lista de usuários:', error);
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="5" class="center">Erro ao carregar usuários.</td></tr>';
             }
         }
 
-        async function criarUsuario(event) {
+        async function alternarStatus(u) {
+            if (u.protegido) {
+                alert('Este é o administrador do sistema e não pode ser inativado.');
+                return;
+            }
+            const novoAtivo = !u.ativo;
+            const acao = novoAtivo ? 'ativar' : 'inativar';
+            if (!confirm('Deseja ' + acao + ' o usuário "' + u.nome + '"?')) return;
+
+            try {
+                const response = await fetchAutenticado('/api/usuarios/' + u._id + '/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ativo: novoAtivo })
+                });
+                const resultado = await response.json();
+                if (!response.ok) {
+                    alert(resultado.erro || 'Não foi possível atualizar o status.');
+                    return;
+                }
+                carregarUsuarios();
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao atualizar status.');
+            }
+        }
+
+        async function excluirUsuario(u) {
+            if (u.protegido) {
+                alert('Este é o administrador do sistema e não pode ser excluído.');
+                return;
+            }
+            if (!confirm('Excluir permanentemente "' + u.nome + '"?\n\nEsta ação não pode ser desfeita.')) return;
+            if (!confirm('Confirma a exclusão de "' + u.nome + '"?')) return;
+
+            try {
+                const response = await fetchAutenticado('/api/usuarios/' + u._id, { method: 'DELETE' });
+                const resultado = await response.json();
+                if (!response.ok) {
+                    alert(resultado.erro || 'Não foi possível excluir.');
+                    return;
+                }
+                if (idEditando && String(idEditando) === String(u._id)) {
+                    modoCriacao();
+                }
+                carregarUsuarios();
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao excluir.');
+            }
+        }
+
+        async function salvarUsuario(event) {
             event.preventDefault();
-            const mensagem = document.getElementById('mensagem');
             mensagem.classList.add('hidden');
 
             const dados = {
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value,
-                senha: document.getElementById('senha').value,
+                nome: document.getElementById('nome').value.trim(),
+                email: document.getElementById('email').value.trim(),
                 perfil: document.getElementById('perfil').value
             };
+            const senha = campoSenha.value;
+            if (senha) dados.senha = senha;
 
             try {
-                const response = await fetchAutenticado('/api/usuarios', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
-                });
+                let response;
+                if (idEditando) {
+                    response = await fetchAutenticado('/api/usuarios/' + idEditando, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dados)
+                    });
+                } else {
+                    if (!senha) {
+                        mostrarMensagem('erro', 'A senha é obrigatória para novos usuários.');
+                        return;
+                    }
+                    dados.senha = senha;
+                    response = await fetchAutenticado('/api/usuarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dados)
+                    });
+                }
 
                 const resultado = await response.json();
-
                 if (response.ok) {
-                    mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-green-50 text-green-700';
-                    mensagem.innerText = 'Usuário criado com sucesso!';
-                    document.getElementById('formNovoUsuario').reset();
-                    carregarUsuarios(); // Recarrega a tabela para mostrar o novo
+                    const textoOk = idEditando ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!';
+                    modoCriacao();
+                    mostrarMensagem('ok', textoOk);
+                    carregarUsuarios();
                 } else {
-                    mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-red-50 text-red-700';
-                    mensagem.innerText = resultado.erro || 'Erro ao criar usuário.';
+                    mostrarMensagem('erro', resultado.erro || 'Erro ao salvar usuário.');
                 }
-                mensagem.classList.remove('hidden');
             } catch (err) {
-                // Aqui era onde o código original estava cortado
-                mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-red-50 text-red-700';
-                mensagem.innerText = 'Erro de conexão com o servidor ao tentar criar usuário.';
-                mensagem.classList.remove('hidden');
                 console.error(err);
+                mostrarMensagem('erro', 'Erro de conexão com o servidor.');
             }
         }
 
-        // Adiciona um evento para carregar a lista de usuários assim que a página abrir
-        document.addEventListener('DOMContentLoaded', carregarUsuarios);
+        document.addEventListener('DOMContentLoaded', () => {
+            modoCriacao();
+            carregarUsuarios();
+        });
     </script>
 </body>
-
 </html>

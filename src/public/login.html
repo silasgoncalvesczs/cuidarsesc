@@ -1,49 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CUIDAR SESC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0fdf4;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
 </head>
-
-<body class="min-h-screen flex items-center justify-center">
-
-    <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
-        <h1 class="text-3xl font-bold text-green-800 text-center mb-8">CUIDAR SESC</h1>
-
-        <form id="formLogin" onsubmit="fazerLogin(event)">
-            <div class="mb-4">
-                <label class="block text-gray-700 font-bold mb-2">E-mail</label>
-                <input type="email" id="email" required
-                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
+<body>
+    <div class="login-wrap">
+        <div class="login-card">
+            <div style="display:flex;justify-content:center;margin-bottom:0.75rem;color:var(--brand)">
+                <span class="icon-mask icon-xl" style="mask-image:url('/icons/shield.svg');-webkit-mask-image:url('/icons/shield.svg')"></span>
             </div>
+            <h1 class="brand">CUIDAR SESC</h1>
+            <p class="subtitle">Acesso ao sistema de gestão e presença</p>
 
-            <div class="mb-6">
-                <label class="block text-gray-700 font-bold mb-2">Senha</label>
-                <input type="password" id="senha" required
-                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
-            </div>
+            <form id="formLogin" onsubmit="fazerLogin(event)">
+                <div class="field mb-2">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" required autocomplete="username">
+                </div>
+                <div class="field mb-2">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" required autocomplete="current-password">
+                </div>
 
-            <div id="mensagemErro" class="hidden bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4"></div>
+                <div id="mensagemErro" class="banner banner-danger hidden mb-2"></div>
 
-            <button type="submit"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg text-lg transition">
-                Entrar
-            </button>
-        </form>
+                <button type="submit" class="btn btn-primary btn-lg">Entrar no sistema</button>
+            </form>
+        </div>
     </div>
 
     <script src="/js/auth.js"></script>
     <script>
-        // Se já estiver logado, manda direto pro início
         if (getToken()) {
             window.location.href = '/index.html';
         }
@@ -61,7 +52,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, senha })
                 });
-
                 const resultado = await response.json();
 
                 if (response.ok) {
@@ -78,5 +68,4 @@
         }
     </script>
 </body>
-
 </html>

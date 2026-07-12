@@ -3,14 +3,18 @@ const router = express.Router();
 const UsuarioController = require('../controllers/UsuarioController');
 const { autenticar, autenticarOpcional, autorizar } = require('../middleware/auth');
 
-// Login é sempre público
-router.post('/login', UsuarioController.login);
+const soAdmin = [autenticar, autorizar('admin')];
 
-// Criar usuário: público SÓ se for o primeiro do sistema (bootstrap do admin).
-// Depois disso, exige token de admin (checado dentro do controller).
+router.post('/login', UsuarioController.login);
 router.post('/', autenticarOpcional, UsuarioController.create);
 
-// Listar usuários: só admin
-router.get('/', autenticar, autorizar('admin'), UsuarioController.index);
+router.get('/me', autenticar, UsuarioController.me);
+router.patch('/me/senha', autenticar, UsuarioController.alterarSenha);
+
+router.get('/', ...soAdmin, UsuarioController.index);
+router.get('/:id', ...soAdmin, UsuarioController.show);
+router.put('/:id', ...soAdmin, UsuarioController.update);
+router.patch('/:id/status', ...soAdmin, UsuarioController.atualizarStatus);
+router.delete('/:id', ...soAdmin, UsuarioController.remove);
 
 module.exports = router;

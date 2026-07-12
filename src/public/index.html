@@ -1,51 +1,82 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CUIDAR SESC - Início</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Fonte mais legível e fundo com um verde bem suave */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0fdf4;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
 </head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <span class="brand-mark">CUIDAR SESC</span>
+            <span></span>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
 
-<body class="text-gray-800">
+        <main class="page">
+            <section class="hero">
+                <h1 class="brand">CUIDAR SESC</h1>
+                <p>Gestão de cadastro, anamnese e presença com reconhecimento facial.</p>
+            </section>
 
-    <nav class="bg-violet-700 text-white p-6 shadow-md">
-        <h1 class="text-4xl font-bold text-center tracking-wide">CUIDAR SESC</h1>
-    </nav>
+            <div class="home-grid" id="menuPrincipal">
+                <a class="tile tile-presenca" href="/chamada.html">
+                    <span class="icon-mask icon-hero" style="mask-image:url('/icons/camera.svg');-webkit-mask-image:url('/icons/camera.svg')"></span>
+                    <h2>Registrar Presença</h2>
+                    <p>Totem de reconhecimento facial para entrada nas atividades.</p>
+                </a>
 
-    <main class="container mx-auto mt-12 p-4">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-semibold text-green-800">Bem-vindo(a) ao Sistema</h2>
-            <p class="text-2xl mt-4 text-gray-600">Selecione uma opção abaixo para começar:</p>
-        </div>
+                <a class="tile tile-cadastro" href="/cadastro.html" id="tileCadastro">
+                    <span class="icon-mask icon-hero" style="color:var(--accent);mask-image:url('/icons/user-plus.svg');-webkit-mask-image:url('/icons/user-plus.svg')"></span>
+                    <h2>Participantes</h2>
+                    <p>Consultar, cadastrar, ativar ou inativar participantes do programa.</p>
+                </a>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <a class="tile tile-relatorios hidden" href="/relatorios.html" id="tileRelatorios">
+                    <span class="icon-mask icon-hero" style="color:#2f5d50;mask-image:url('/icons/report.svg');-webkit-mask-image:url('/icons/report.svg')"></span>
+                    <h2>Relatórios</h2>
+                    <p>Visualizar e exportar cadastros e presenças por atividade e período.</p>
+                </a>
 
-            <a href="/chamada.html"
-                class="bg-white rounded-3xl shadow-xl p-10 text-center hover:bg-green-50 transition transform hover:-translate-y-2 border-b-8 border-green-600 flex flex-col items-center justify-center">
-                <div class="text-7xl mb-6">📸</div>
-                <h3 class="text-4xl font-bold text-green-700">Registrar Presença</h3>
-                <p class="mt-4 text-xl text-gray-600">Reconhecimento facial para entrada nas atividades.</p>
-            </a>
+                <a class="tile tile-admin hidden" href="/usuarios.html" id="tileUsuarios">
+                    <span class="icon-mask icon-hero" style="color:#4d5c56;mask-image:url('/icons/users.svg');-webkit-mask-image:url('/icons/users.svg')"></span>
+                    <h2>Usuários do Sistema</h2>
+                    <p>Gerenciar acessos de administradores, gestores e operadores.</p>
+                </a>
+            </div>
+        </main>
+    </div>
 
-            <a href="/cadastro.html"
-                class="bg-white rounded-3xl shadow-xl p-10 text-center hover:bg-blue-50 transition transform hover:-translate-y-2 border-b-8 border-blue-600 flex flex-col items-center justify-center">
-                <div class="text-7xl mb-6">📝</div>
-                <h3 class="text-4xl font-bold text-blue-700">Novo Cadastro</h3>
-                <p class="mt-4 text-xl text-gray-600">Cadastrar usuário, fotos e ficha de anamnese.</p>
-            </a>
-
-        </div>
-    </main>
-
+    <script src="/js/auth.js"></script>
+    <script>
+        if (typeof exigirLogin === 'function') {
+            exigirLogin();
+        }
+        const usuario = getUsuarioLogado();
+        if (usuario && usuario.perfil === 'admin') {
+            document.getElementById('tileUsuarios').classList.remove('hidden');
+        }
+        if (usuario && (usuario.perfil === 'admin' || usuario.perfil === 'gestor')) {
+            document.getElementById('tileRelatorios').classList.remove('hidden');
+        }
+        if (usuario && usuario.perfil === 'operador') {
+            document.getElementById('tileCadastro').classList.add('hidden');
+        }
+    </script>
 </body>
-
 </html>

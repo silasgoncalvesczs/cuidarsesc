@@ -11,6 +11,9 @@ uploads/
 .env
 .env.local
 
+# Certificados HTTPS gerados em runtime
+certs/
+
 # Logs
 *.log
 npm-debug.log*

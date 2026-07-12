@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - CUIDAR SESC</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+    <script src="/js/vendor/jspdf.umd.min.js"></script>
+    <script src="/js/vendor/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Relatórios</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="page page-wide">
+            <section class="panel mb-2">
+                <div class="tabs" style="margin-top:0">
+                    <button type="button" class="tab-btn active" id="tab-presencas" onclick="trocarTipo('presencas')">Presenças</button>
+                    <button type="button" class="tab-btn" id="tab-participantes" onclick="trocarTipo('participantes')">Participantes</button>
+                </div>
+
+                <div class="toolbar" id="filtrosPresencas">
+                    <div class="field">
+                        <label for="filtroAtividade">Atividade</label>
+                        <select id="filtroAtividade">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="field shrink">
+                        <label for="dataInicioPresenca">Data início</label>
+                        <input type="date" id="dataInicioPresenca">
+                    </div>
+                    <div class="field shrink">
+                        <label for="dataFimPresenca">Data fim</label>
+                        <input type="date" id="dataFimPresenca">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="consultar()">Consultar</button>
+                </div>
+
+                <div class="toolbar hidden" id="filtrosParticipantes">
+                    <div class="field">
+                        <label for="buscaParticipante">Buscar por nome</label>
+                        <input type="search" id="buscaParticipante" placeholder="Nome completo...">
+                    </div>
+                    <div class="field shrink">
+                        <label for="filtroStatusParticipante">Status</label>
+                        <select id="filtroStatusParticipante">
+                            <option value="">Todos</option>
+                            <option value="true">Ativos</option>
+                            <option value="false">Inativos</option>
+                        </select>
+                    </div>
+                    <div class="field shrink">
+                        <label for="dataInicioCadastro">Cadastro de</label>
+                        <input type="date" id="dataInicioCadastro">
+                    </div>
+                    <div class="field shrink">
+                        <label for="dataFimCadastro">Cadastro até</label>
+                        <input type="date" id="dataFimCadastro">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="consultar()">Consultar</button>
+                </div>
+
+                <div class="actions" style="margin-top:0.5rem">
+                    <p class="lead" id="resumoResultado" style="margin:0">Selecione os filtros e clique em Consultar.</p>
+                    <div class="actions-cell">
+                        <button type="button" class="btn btn-ghost" id="btnCsv" onclick="exportarCsv()" disabled>Exportar CSV</button>
+                        <button type="button" class="btn btn-secondary" id="btnPdf" onclick="exportarPdf()" disabled>Exportar PDF</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div id="msgRelatorio" class="banner banner-info hidden mb-2"></div>
+                <div class="table-wrap">
+                    <table class="data" id="tabelaRelatorio">
+                        <thead id="cabecalhoRelatorio"></thead>
+                        <tbody id="corpoRelatorio">
+                            <tr><td class="center">Nenhum dado carregado.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin', 'gestor']);
+        }
+
+        let tipoAtual = 'presencas';
+        let ultimoResultado = null;
+
+        const filtrosPresencas = document.getElementById('filtrosPresencas');
+        const filtrosParticipantes = document.getElementById('filtrosParticipantes');
+        const resumoResultado = document.getElementById('resumoResultado');
+        const cabecalhoRelatorio = document.getElementById('cabecalhoRelatorio');
+        const corpoRelatorio = document.getElementById('corpoRelatorio');
+        const msgRelatorio = document.getElementById('msgRelatorio');
+        const btnCsv = document.getElementById('btnCsv');
+        const btnPdf = document.getElementById('btnPdf');
+
+        function trocarTipo(tipo) {
+            tipoAtual = tipo;
+            document.getElementById('tab-presencas').classList.toggle('active', tipo === 'presencas');
+            document.getElementById('tab-participantes').classList.toggle('active', tipo === 'participantes');
+            filtrosPresencas.classList.toggle('hidden', tipo !== 'presencas');
+            filtrosParticipantes.classList.toggle('hidden', tipo !== 'participantes');
+            ultimoResultado = null;
+            btnCsv.disabled = true;
+            btnPdf.disabled = true;
+            resumoResultado.innerText = 'Selecione os filtros e clique em Consultar.';
+            cabecalhoRelatorio.innerHTML = '';
+            corpoRelatorio.innerHTML = '<tr><td class="center">Nenhum dado carregado.</td></tr>';
+            msgRelatorio.classList.add('hidden');
+        }
+
+        async function carregarAtividades() {
+            const select = document.getElementById('filtroAtividade');
+            try {
+                const response = await fetchAutenticado('/api/relatorios/atividades');
+                const atividades = await response.json();
+                select.innerHTML = '<option value="">Todas</option>';
+                if (Array.isArray(atividades)) {
+                    atividades.forEach((a) => {
+                        const opt = document.createElement('option');
+                        opt.value = a._id;
+                        opt.textContent = a.nome + (a.ativo ? '' : ' (inativa)');
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function montarParamsPresencas() {
+            const params = new URLSearchParams();
+            const atividadeId = document.getElementById('filtroAtividade').value;
+            const dataInicio = document.getElementById('dataInicioPresenca').value;
+            const dataFim = document.getElementById('dataFimPresenca').value;
+            if (atividadeId) params.set('atividadeId', atividadeId);
+            if (dataInicio) params.set('dataInicio', dataInicio);
+            if (dataFim) params.set('dataFim', dataFim);
+            return params;
+        }
+
+        function montarParamsParticipantes() {
+            const params = new URLSearchParams();
+            const busca = document.getElementById('buscaParticipante').value.trim();
+            const ativo = document.getElementById('filtroStatusParticipante').value;
+            const dataInicio = document.getElementById('dataInicioCadastro').value;
+            const dataFim = document.getElementById('dataFimCadastro').value;
+            if (busca) params.set('busca', busca);
+            if (ativo) params.set('ativo', ativo);
+            if (dataInicio) params.set('dataInicio', dataInicio);
+            if (dataFim) params.set('dataFim', dataFim);
+            return params;
+        }
+
+        function renderPresencas(dados) {
+            cabecalhoRelatorio.innerHTML =
+                '<tr><th>Data/Hora</th><th>Participante</th><th>Nascimento</th><th>Atividade</th><th>Categoria</th><th>Tipo</th></tr>';
+            if (!dados.registros.length) {
+                corpoRelatorio.innerHTML = '<tr><td colspan="6" class="center">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+            corpoRelatorio.innerHTML = dados.registros.map((r) =>
+                '<tr>' +
+                '<td>' + escapeHtml(r.dataHoraFormatada) + '</td>' +
+                '<td>' + escapeHtml(r.participanteNome) + '</td>' +
+                '<td>' + escapeHtml(r.participanteNascimento) + '</td>' +
+                '<td>' + escapeHtml(r.atividadeNome) + '</td>' +
+                '<td>' + escapeHtml(r.atividadeCategoria) + '</td>' +
+                '<td style="text-transform:capitalize">' + escapeHtml(r.tipoRegistro) + '</td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function renderParticipantes(dados) {
+            cabecalhoRelatorio.innerHTML =
+                '<tr><th>Nome</th><th>Nascimento</th><th>Status</th><th>Cadastrado em</th><th>Tipo sanguíneo</th><th>Alergias</th></tr>';
+            if (!dados.registros.length) {
+                corpoRelatorio.innerHTML = '<tr><td colspan="6" class="center">Nenhum participante encontrado.</td></tr>';
+                return;
+            }
+            corpoRelatorio.innerHTML = dados.registros.map((r) =>
+                '<tr class="' + (r.ativo ? '' : 'row-inactive') + '">' +
+                '<td>' + escapeHtml(r.nomeCompleto) + '</td>' +
+                '<td>' + escapeHtml(r.dataNascimentoFormatada) + '</td>' +
+                '<td>' + (r.ativo ? '<span class="badge badge-ok">Ativo</span>' : '<span class="badge badge-off">Inativo</span>') + '</td>' +
+                '<td>' + escapeHtml(r.cadastradoEmFormatado) + '</td>' +
+                '<td>' + escapeHtml(r.tipoSanguineo || '—') + '</td>' +
+                '<td>' + escapeHtml(r.alergias || '—') + '</td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function escapeHtml(texto) {
+            return String(texto == null ? '' : texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        async function consultar() {
+            msgRelatorio.classList.add('hidden');
+            corpoRelatorio.innerHTML = '<tr><td class="center">Carregando...</td></tr>';
+            btnCsv.disabled = true;
+            btnPdf.disabled = true;
+
+            try {
+                let response;
+                if (tipoAtual === 'presencas') {
+                    response = await fetchAutenticado('/api/relatorios/presencas?' + montarParamsPresencas().toString());
+                } else {
+                    response = await fetchAutenticado('/api/relatorios/participantes?' + montarParamsParticipantes().toString());
+                }
+                const dados = await response.json();
+                if (!response.ok) throw new Error(dados.erro || 'Falha na consulta');
+
+                ultimoResultado = { tipo: tipoAtual, dados: dados };
+                resumoResultado.innerText = dados.total + ' registro(s) encontrado(s).';
+                if (tipoAtual === 'presencas') renderPresencas(dados);
+                else renderParticipantes(dados);
+
+                const temDados = dados.total > 0;
+                btnCsv.disabled = !temDados;
+                btnPdf.disabled = !temDados;
+            } catch (err) {
+                console.error(err);
+                corpoRelatorio.innerHTML = '<tr><td class="center">Erro ao carregar relatório.</td></tr>';
+                msgRelatorio.className = 'banner banner-danger mb-2';
+                msgRelatorio.innerText = err.message || 'Erro ao consultar.';
+                msgRelatorio.classList.remove('hidden');
+                resumoResultado.innerText = 'Falha na consulta.';
+            }
+        }
+
+        async function exportarCsv() {
+            if (!ultimoResultado) return;
+            const params = tipoAtual === 'presencas' ? montarParamsPresencas() : montarParamsParticipantes();
+            params.set('formato', 'csv');
+            const url = '/api/relatorios/' + tipoAtual + '?' + params.toString();
+
+            try {
+                const response = await fetchAutenticado(url);
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    alert(err.erro || 'Falha ao exportar CSV.');
+                    return;
+                }
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = tipoAtual === 'presencas' ? 'relatorio-presencas.csv' : 'relatorio-participantes.csv';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(link.href);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao exportar CSV.');
+            }
+        }
+
+        function exportarPdf() {
+            if (!ultimoResultado || !window.jspdf) {
+                alert('Biblioteca de PDF não carregada.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const titulo = tipoAtual === 'presencas' ? 'Relatório de Presenças' : 'Relatório de Participantes';
+            const agora = new Date().toLocaleString('pt-BR');
+
+            doc.setFontSize(16);
+            doc.text('CUIDAR SESC — ' + titulo, 14, 16);
+            doc.setFontSize(10);
+            doc.text('Gerado em: ' + agora + '  |  Total: ' + ultimoResultado.dados.total, 14, 23);
+
+            let head;
+            let body;
+
+            if (tipoAtual === 'presencas') {
+                head = [['Data/Hora', 'Participante', 'Nascimento', 'Atividade', 'Categoria', 'Tipo']];
+                body = ultimoResultado.dados.registros.map((r) => [
+                    r.dataHoraFormatada,
+                    r.participanteNome,
+                    r.participanteNascimento,
+                    r.atividadeNome,
+                    r.atividadeCategoria,
+                    r.tipoRegistro
+                ]);
+            } else {
+                head = [['Nome', 'Nascimento', 'Status', 'Cadastrado em', 'Tipo sanguíneo', 'Alergias']];
+                body = ultimoResultado.dados.registros.map((r) => [
+                    r.nomeCompleto,
+                    r.dataNascimentoFormatada,
+                    r.ativo ? 'Ativo' : 'Inativo',
+                    r.cadastradoEmFormatado,
+                    r.tipoSanguineo || '',
+                    r.alergias || ''
+                ]);
+            }
+
+            doc.autoTable({
+                startY: 28,
+                head: head,
+                body: body,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [15, 107, 76] },
+                alternateRowStyles: { fillColor: [240, 248, 244] }
+            });
+
+            doc.save(tipoAtual === 'presencas' ? 'relatorio-presencas.pdf' : 'relatorio-participantes.pdf');
+        }
+
+        carregarAtividades();
+    </script>
+</body>
+</html>

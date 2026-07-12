@@ -1,322 +1,634 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novo Cadastro - CUIDAR SESC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0fdf4;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-    </style>
+    <title>Participantes - CUIDAR SESC</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+    <script src="/js/face-api.min.js"></script>
 </head>
-
-<body class="text-gray-800">
-
-    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center">
-        <a href="/" class="text-white hover:text-green-200 font-bold text-xl">&larr; Voltar</a>
-        <h1 class="text-2xl font-bold tracking-wide">Novo Cadastro</h1>
-        <div style="width: 60px;"></div>
-    </nav>
-
-    <main class="container mx-auto mt-8 p-4 max-w-4xl">
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-
-            <div id="loadingIA" class="bg-blue-100 text-blue-800 p-4 rounded-lg text-center font-bold mb-4">
-                ⏳ Carregando Inteligência Artificial, por favor aguarde...
-            </div>
-
-            <div class="flex border-b border-gray-200 mb-8">
-                <button class="flex-1 py-4 px-6 text-center border-b-4 border-blue-600 font-bold text-blue-700 text-lg"
-                    id="tab-btn-1" onclick="mudarAba(1)">1. Dados Pessoais</button>
-                <button
-                    class="flex-1 py-4 px-6 text-center border-b-4 border-transparent text-gray-500 font-medium text-lg hover:text-gray-700"
-                    id="tab-btn-2" onclick="mudarAba(2)">2. Anamnese</button>
-                <button
-                    class="flex-1 py-4 px-6 text-center border-b-4 border-transparent text-gray-500 font-medium text-lg hover:text-gray-700"
-                    id="tab-btn-3" onclick="mudarAba(3)">3. Biometria (Fotos)</button>
-            </div>
-
-            <div id="telaSucesso" class="hidden text-center py-12">
-                <div class="text-9xl mb-6">✅</div>
-                <h2 class="text-5xl font-bold text-green-700 mb-4">Cadastro Concluído!</h2>
-                <p class="text-2xl text-gray-600 mb-10">O usuário foi registrado com sucesso no sistema.</p>
-                <a href="/"
-                    class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg transition transform hover:-translate-y-1">
-                    &larr; Voltar para o Início
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="topbar-link" href="/">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Participantes</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
                 </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
             </div>
+        </header>
 
-            <form id="formCadastro" onsubmit="enviarCadastro(event)">
-
-                <div id="aba-1" class="tab-content active">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Informações Básicas</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="col-span-2">
-                            <label class="block text-gray-700 font-bold mb-2 text-lg">Nome Completo *</label>
-                            <input type="text" id="nomeCompleto" required
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-bold mb-2 text-lg">Data de Nascimento *</label>
-                            <input type="date" id="dataNascimento" required
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
-                        </div>
+        <main class="page">
+            <section id="painelLista" class="panel">
+                <div class="actions" style="margin-top:0;align-items:center">
+                    <div>
+                        <h2 class="section-title" style="margin:0">Participantes cadastrados</h2>
+                        <p class="lead">Busque, edite, ative, inative ou exclua registros.</p>
                     </div>
-                    <div class="mt-8 flex justify-end">
-                        <button type="button" onclick="mudarAba(2)"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Avançar
-                            para Anamnese &rarr;</button>
+                    <button type="button" class="btn btn-primary" onclick="mostrarFormularioNovo()">Novo cadastro</button>
+                </div>
+
+                <div class="toolbar">
+                    <div class="field">
+                        <label for="campoBusca">Buscar por nome</label>
+                        <input type="search" id="campoBusca" placeholder="Digite o nome completo..." autocomplete="off">
+                    </div>
+                    <div class="field shrink">
+                        <label for="filtroAtivo">Status</label>
+                        <select id="filtroAtivo">
+                            <option value="">Todos</option>
+                            <option value="true" selected>Ativos</option>
+                            <option value="false">Inativos</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-ghost" onclick="carregarParticipantes()">Buscar</button>
+                </div>
+
+                <div id="msgLista" class="banner banner-info hidden mb-2"></div>
+
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead>
+                            <tr>
+                                <th>Nome completo</th>
+                                <th>Nascimento</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaParticipantes">
+                            <tr><td colspan="4" class="center">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="painelFormulario" class="panel panel-section-gap hidden">
+                <div class="actions" style="margin-top:0;align-items:center">
+                    <h2 class="section-title" style="margin:0" id="tituloFormulario">Novo cadastro</h2>
+                    <button type="button" class="btn btn-ghost" onclick="mostrarLista()">Voltar à lista</button>
+                </div>
+
+                <div id="loadingIA" class="banner banner-info mb-2">Carregando reconhecimento facial, aguarde...</div>
+
+                <div class="tabs" id="abasCadastro">
+                    <button type="button" class="tab-btn active" id="tab-btn-1" onclick="mudarAba(1)">1. Dados</button>
+                    <button type="button" class="tab-btn" id="tab-btn-2" onclick="mudarAba(2)">2. Anamnese</button>
+                    <button type="button" class="tab-btn" id="tab-btn-3" onclick="mudarAba(3)">3. Biometria</button>
+                </div>
+
+                <div id="telaSucesso" class="success-screen hidden">
+                    <span class="icon-mask icon-xl" style="margin:0 auto;color:var(--ok);mask-image:url('/icons/check.svg');-webkit-mask-image:url('/icons/check.svg')"></span>
+                    <h2 id="tituloSucesso">Cadastro concluído</h2>
+                    <p class="lead" id="textoSucesso">O participante foi registrado com sucesso.</p>
+                    <div class="actions end" style="justify-content:center">
+                        <button type="button" class="btn btn-ghost" onclick="mostrarLista()">Ver lista</button>
+                        <button type="button" class="btn btn-primary" onclick="mostrarFormularioNovo()">Cadastrar outro</button>
                     </div>
                 </div>
 
-                <div id="aba-2" class="tab-content">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Ficha Médica Simplificada</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-bold mb-2 text-lg">Tipo Sanguíneo</label>
-                            <select id="tipoSanguineo"
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-lg">
-                                <option value="">Não informado</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                            </select>
+                <form id="formCadastro" onsubmit="enviarCadastro(event)">
+                    <div id="aba-1" class="tab-content active">
+                        <h2 class="section-title">Informações básicas</h2>
+                        <div class="form-grid two">
+                            <div class="field full">
+                                <label for="nomeCompleto">Nome completo *</label>
+                                <input type="text" id="nomeCompleto" required>
+                            </div>
+                            <div class="field">
+                                <label for="dataNascimento">Data de nascimento *</label>
+                                <input type="date" id="dataNascimento" required>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-gray-700 font-bold mb-2 text-lg">Alergias</label>
-                            <input type="text" id="alergias"
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 text-lg"
-                                placeholder="Ex: Penicilina, Dipirona">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-gray-700 font-bold mb-2 text-lg">Medicamentos de Uso
-                                Contínuo</label>
-                            <input type="text" id="medicamentos"
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 text-lg"
-                                placeholder="Ex: Losartana, Metformina">
-                        </div>
-                    </div>
-                    <div class="mt-8 flex justify-between">
-                        <button type="button" onclick="mudarAba(1)"
-                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg transition">&larr;
-                            Voltar</button>
-                        <button type="button" onclick="mudarAba(3)"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Avançar
-                            para Biometria &rarr;</button>
-                    </div>
-                </div>
-
-                <div id="aba-3" class="tab-content">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Captura Facial</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                        <div
-                            class="bg-black rounded-xl overflow-hidden shadow-inner relative aspect-video flex items-center justify-center">
-                            <video id="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
-                        </div>
-
-                        <div class="flex flex-col justify-center h-full">
-                            <button type="button" id="btnCapturar"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl text-xl shadow-lg transition mb-6">
-                                📸 Capturar Foto (<span id="contagemFotos">0</span>/3)
-                            </button>
-                            <div id="galeriaFotos" class="grid grid-cols-3 gap-2"></div>
+                        <div class="actions end">
+                            <button type="button" class="btn btn-secondary" onclick="mudarAba(2)">Avançar para anamnese</button>
                         </div>
                     </div>
 
-                    <div id="mensagemStatus" class="mt-4 text-center font-bold text-lg hidden"></div>
-
-                    <div class="mt-8 flex justify-between border-t border-gray-200 pt-8">
-                        <button type="button" onclick="mudarAba(2)"
-                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-lg text-lg transition">&larr;
-                            Voltar</button>
-                        <button type="submit" id="btnSalvar" disabled
-                            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-10 rounded-lg text-xl shadow-lg transition">✅
-                            Salvar Cadastro</button>
+                    <div id="aba-2" class="tab-content">
+                        <h2 class="section-title">Ficha médica simplificada</h2>
+                        <div class="form-grid two">
+                            <div class="field">
+                                <label for="tipoSanguineo">Tipo sanguíneo</label>
+                                <select id="tipoSanguineo">
+                                    <option value="">Não informado</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="alergias">Alergias</label>
+                                <input type="text" id="alergias" placeholder="Ex: Penicilina, Dipirona">
+                            </div>
+                            <div class="field full">
+                                <label for="medicamentos">Medicamentos de uso contínuo</label>
+                                <input type="text" id="medicamentos" placeholder="Ex: Losartana, Metformina">
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button type="button" class="btn btn-ghost" onclick="mudarAba(1)">Voltar</button>
+                            <button type="button" class="btn btn-secondary" id="btnAvancarBio" onclick="mudarAba(3)">Avançar para biometria</button>
+                            <button type="submit" class="btn btn-primary hidden" id="btnSalvarDados">Salvar alterações</button>
+                        </div>
                     </div>
-                </div>
 
-                <canvas id="canvasOculto" style="display: none;"></canvas>
-            </form>
-        </div>
-    </main>
+                    <div id="aba-3" class="tab-content">
+                        <h2 class="section-title">Captura facial</h2>
+                        <div id="avisoBioEdicao" class="banner banner-info mb-2 hidden">
+                            A biometria atual será mantida. Marque a opção abaixo somente se quiser substituir as fotos.
+                            <label style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;font-weight:600;cursor:pointer">
+                                <input type="checkbox" id="chkAtualizarBio">
+                                Atualizar biometria facial agora
+                            </label>
+                        </div>
+                        <p class="lead mb-2" id="textoBioAjuda">Tire 3 fotos com boa iluminação, olhando para a câmera.</p>
 
+                        <div id="blocoCamera" class="form-grid two">
+                            <div class="camera-frame">
+                                <video id="videoElement" autoplay playsinline muted></video>
+                                <div id="avisoCamera" class="camera-overlay hidden"></div>
+                            </div>
+                            <div class="stack-col">
+                                <button type="button" id="btnCapturar" class="btn btn-secondary btn-lg w-full">
+                                    Capturar foto (<span id="contagemFotos">0</span>/3)
+                                </button>
+                                <div id="galeriaFotos" class="photo-grid"></div>
+                            </div>
+                        </div>
+
+                        <div class="actions" style="border-top:1px solid var(--line);padding-top:1.25rem">
+                            <button type="button" class="btn btn-ghost" onclick="mudarAba(2)">Voltar</button>
+                            <button type="submit" id="btnSalvar" class="btn btn-primary btn-lg" disabled>Salvar cadastro</button>
+                        </div>
+                    </div>
+
+                    <canvas id="canvasOculto" class="hidden"></canvas>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/face-init.js"></script>
+    <script src="/js/camera.js"></script>
     <script>
-        // Inicializa a IA assim que a página carrega
-        const divLoading = document.getElementById('loadingIA');
-
-        // Usando o servidor global (CDN) direto da fonte oficial, sem precisar baixar arquivos locais!
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-
-        Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]).then(() => {
-            divLoading.style.display = 'none';
-            console.log("IA carregada com sucesso do servidor global!");
-        }).catch((err) => {
-            divLoading.classList.remove('bg-blue-100', 'text-blue-800');
-            divLoading.classList.add('bg-red-100', 'text-red-800');
-            divLoading.innerText = '❌ Erro ao carregar IA: ' + err.message;
-            console.error("Erro detalhado da IA:", err);
-        });
-
-        function mudarAba(abaDestino) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('button[id^="tab-btn-"]').forEach(el => {
-                el.classList.remove('border-blue-600', 'text-blue-700');
-                el.classList.add('border-transparent', 'text-gray-500');
-            });
-            document.getElementById(`aba-${abaDestino}`).classList.add('active');
-            const btnAtivo = document.getElementById(`tab-btn-${abaDestino}`);
-            btnAtivo.classList.remove('border-transparent', 'text-gray-500');
-            btnAtivo.classList.add('border-blue-600', 'text-blue-700');
-
-            if (abaDestino === 3) iniciarCamera();
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin', 'gestor']);
         }
 
+        const painelLista = document.getElementById('painelLista');
+        const painelFormulario = document.getElementById('painelFormulario');
+        const campoBusca = document.getElementById('campoBusca');
+        const filtroAtivo = document.getElementById('filtroAtivo');
+        const listaParticipantes = document.getElementById('listaParticipantes');
+        const msgLista = document.getElementById('msgLista');
+        const divLoading = document.getElementById('loadingIA');
+        const tituloFormulario = document.getElementById('tituloFormulario');
+        const btnSalvar = document.getElementById('btnSalvar');
+        const btnSalvarDados = document.getElementById('btnSalvarDados');
+        const btnAvancarBio = document.getElementById('btnAvancarBio');
+        const avisoBioEdicao = document.getElementById('avisoBioEdicao');
+        const chkAtualizarBio = document.getElementById('chkAtualizarBio');
+        const blocoCamera = document.getElementById('blocoCamera');
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasOculto');
         const btnCapturar = document.getElementById('btnCapturar');
-        const btnSalvar = document.getElementById('btnSalvar');
 
+        let faceApiPronta = false;
+        let buscaTimer = null;
+        let modoEdicao = false;
+        let idEditando = null;
         let fotosCapturadas = [];
-        let faceDescriptors = []; // Array que vai guardar os números do rosto
+        let faceDescriptors = [];
         let stream = null;
+
+        function formatarData(valor) {
+            if (!valor) return '—';
+            const d = new Date(valor);
+            if (Number.isNaN(d.getTime())) return '—';
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        function dataInput(valor) {
+            if (!valor) return '';
+            const d = new Date(valor);
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toISOString().slice(0, 10);
+        }
+
+        function escapeHtml(texto) {
+            return String(texto || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        async function carregarParticipantes() {
+            msgLista.classList.add('hidden');
+            listaParticipantes.innerHTML = '<tr><td colspan="4" class="center">Carregando...</td></tr>';
+
+            const params = new URLSearchParams();
+            const busca = campoBusca.value.trim();
+            if (busca) params.set('busca', busca);
+            if (filtroAtivo.value) params.set('ativo', filtroAtivo.value);
+
+            try {
+                const response = await fetchAutenticado('/api/idosos?' + params.toString());
+                const dados = await response.json();
+                if (!response.ok) throw new Error(dados.erro || 'Falha ao listar');
+
+                if (!Array.isArray(dados) || dados.length === 0) {
+                    listaParticipantes.innerHTML = '<tr><td colspan="4" class="center">Nenhum participante encontrado.</td></tr>';
+                    return;
+                }
+
+                listaParticipantes.innerHTML = '';
+                dados.forEach((p) => {
+                    const tr = document.createElement('tr');
+                    if (!p.ativo) tr.className = 'row-inactive';
+                    const statusHtml = p.ativo
+                        ? '<span class="badge badge-ok">Ativo</span>'
+                        : '<span class="badge badge-off">Inativo</span>';
+                    const statusLabel = p.ativo ? 'Inativar' : 'Ativar';
+
+                    tr.innerHTML =
+                        '<td>' + escapeHtml(p.nomeCompleto) + '</td>' +
+                        '<td>' + formatarData(p.dataNascimento) + '</td>' +
+                        '<td>' + statusHtml + '</td>' +
+                        '<td><div class="actions-cell">' +
+                        '<button type="button" class="btn btn-secondary btn-sm" data-acao="editar">Editar</button>' +
+                        '<button type="button" class="btn btn-ghost btn-sm" data-acao="status">' + statusLabel + '</button>' +
+                        '<button type="button" class="btn btn-danger-outline btn-sm" data-acao="excluir">Excluir</button>' +
+                        '</div></td>';
+
+                    tr.querySelector('[data-acao="editar"]').addEventListener('click', () => editarParticipante(p._id));
+                    tr.querySelector('[data-acao="status"]').addEventListener('click', () => alternarStatus(p._id, !p.ativo, p.nomeCompleto));
+                    tr.querySelector('[data-acao="excluir"]').addEventListener('click', () => excluirParticipante(p._id, p.nomeCompleto));
+                    listaParticipantes.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                listaParticipantes.innerHTML = '<tr><td colspan="4" class="center">Erro ao carregar a lista.</td></tr>';
+                msgLista.className = 'banner banner-danger mb-2';
+                msgLista.innerText = err.message || 'Erro ao carregar participantes.';
+                msgLista.classList.remove('hidden');
+            }
+        }
+
+        async function alternarStatus(id, novoAtivo, nome) {
+            const acao = novoAtivo ? 'ativar' : 'inativar';
+            if (!confirm('Deseja ' + acao + ' o participante "' + nome + '"?')) return;
+
+            try {
+                const response = await fetchAutenticado('/api/idosos/' + id + '/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ativo: novoAtivo })
+                });
+                const resultado = await response.json();
+                if (!response.ok) {
+                    alert(resultado.erro || 'Não foi possível atualizar o status.');
+                    return;
+                }
+                carregarParticipantes();
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao atualizar status.');
+            }
+        }
+
+        async function excluirParticipante(id, nome) {
+            if (!confirm('Excluir permanentemente "' + nome + '"?\n\nEsta ação não pode ser desfeita.')) return;
+            if (!confirm('Confirma a exclusão de "' + nome + '"?')) return;
+
+            try {
+                const response = await fetchAutenticado('/api/idosos/' + id, { method: 'DELETE' });
+                const resultado = await response.json();
+                if (!response.ok) {
+                    alert(resultado.erro || 'Não foi possível excluir.');
+                    return;
+                }
+                carregarParticipantes();
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao excluir.');
+            }
+        }
+
+        function mostrarLista() {
+            painelFormulario.classList.add('hidden');
+            painelLista.classList.remove('hidden');
+            modoEdicao = false;
+            idEditando = null;
+            carregarParticipantes();
+        }
+
+        function limparCaptura() {
+            document.getElementById('galeriaFotos').innerHTML = '';
+            fotosCapturadas = [];
+            faceDescriptors = [];
+            btnCapturar.disabled = false;
+            btnCapturar.innerHTML = textoBotaoCaptura(0);
+        }
+
+        function aplicarModoFormulario() {
+            if (modoEdicao) {
+                tituloFormulario.innerText = 'Editar participante';
+                avisoBioEdicao.classList.remove('hidden');
+                btnSalvarDados.classList.remove('hidden');
+                btnSalvar.innerText = 'Salvar com nova biometria';
+                chkAtualizarBio.checked = false;
+                atualizarUiBiometriaEdicao();
+            } else {
+                tituloFormulario.innerText = 'Novo cadastro';
+                avisoBioEdicao.classList.add('hidden');
+                btnSalvarDados.classList.add('hidden');
+                btnSalvar.innerText = 'Salvar cadastro';
+                btnSalvar.disabled = true;
+                blocoCamera.classList.remove('hidden');
+                document.getElementById('textoBioAjuda').classList.remove('hidden');
+            }
+        }
+
+        function atualizarUiBiometriaEdicao() {
+            if (!modoEdicao) return;
+            const atualizar = chkAtualizarBio.checked;
+            blocoCamera.classList.toggle('hidden', !atualizar);
+            document.getElementById('textoBioAjuda').classList.toggle('hidden', !atualizar);
+            btnSalvar.disabled = atualizar ? fotosCapturadas.length < 3 : true;
+            if (atualizar) {
+                prepararFaceApi();
+                iniciarCamera();
+            }
+        }
+
+        chkAtualizarBio.addEventListener('change', () => {
+            limparCaptura();
+            atualizarUiBiometriaEdicao();
+        });
+
+        function mostrarFormularioNovo() {
+            modoEdicao = false;
+            idEditando = null;
+            painelLista.classList.add('hidden');
+            painelFormulario.classList.remove('hidden');
+            document.getElementById('telaSucesso').classList.add('hidden');
+            document.getElementById('formCadastro').style.display = '';
+            document.getElementById('abasCadastro').style.display = '';
+            document.getElementById('formCadastro').reset();
+            limparCaptura();
+            aplicarModoFormulario();
+            mudarAba(1);
+            prepararFaceApi();
+        }
+
+        async function editarParticipante(id) {
+            try {
+                const response = await fetchAutenticado('/api/idosos/' + id);
+                const p = await response.json();
+                if (!response.ok) {
+                    alert(p.erro || 'Não foi possível carregar o participante.');
+                    return;
+                }
+
+                modoEdicao = true;
+                idEditando = id;
+                painelLista.classList.add('hidden');
+                painelFormulario.classList.remove('hidden');
+                document.getElementById('telaSucesso').classList.add('hidden');
+                document.getElementById('formCadastro').style.display = '';
+                document.getElementById('abasCadastro').style.display = '';
+
+                document.getElementById('nomeCompleto').value = p.nomeCompleto || '';
+                document.getElementById('dataNascimento').value = dataInput(p.dataNascimento);
+                document.getElementById('tipoSanguineo').value = (p.anamnese && p.anamnese.tipoSanguineo) || '';
+                document.getElementById('alergias').value = ((p.anamnese && p.anamnese.alergias) || []).join(', ');
+                document.getElementById('medicamentos').value = ((p.anamnese && p.anamnese.medicamentosUsoContinuo) || []).join(', ');
+
+                limparCaptura();
+                aplicarModoFormulario();
+                mudarAba(1);
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao carregar participante.');
+            }
+        }
+
+        function mostrarSucesso(titulo, texto) {
+            document.getElementById('formCadastro').style.display = 'none';
+            document.getElementById('abasCadastro').style.display = 'none';
+            document.getElementById('tituloSucesso').innerText = titulo;
+            document.getElementById('textoSucesso').innerText = texto;
+            document.getElementById('telaSucesso').classList.remove('hidden');
+        }
+
+        function prepararFaceApi() {
+            if (faceApiPronta) {
+                divLoading.style.display = 'none';
+                return;
+            }
+            divLoading.style.display = '';
+            divLoading.className = 'banner banner-info mb-2';
+            divLoading.innerText = 'Carregando reconhecimento facial, aguarde...';
+
+            carregarFaceApi('/models')
+                .then(() => {
+                    faceApiPronta = true;
+                    divLoading.style.display = 'none';
+                })
+                .catch((err) => {
+                    divLoading.className = 'banner banner-danger mb-2';
+                    divLoading.innerText = 'Erro ao carregar IA: ' + err.message;
+                    console.error(err);
+                });
+        }
+
+        campoBusca.addEventListener('input', () => {
+            clearTimeout(buscaTimer);
+            buscaTimer = setTimeout(carregarParticipantes, 350);
+        });
+        filtroAtivo.addEventListener('change', carregarParticipantes);
+        carregarParticipantes();
+
+        function mudarAba(abaDestino) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('aba-' + abaDestino).classList.add('active');
+            document.getElementById('tab-btn-' + abaDestino).classList.add('active');
+            if (abaDestino === 3) {
+                if (!modoEdicao || chkAtualizarBio.checked) {
+                    prepararFaceApi();
+                    iniciarCamera();
+                }
+            }
+        }
 
         async function iniciarCamera() {
             if (stream) return;
+            const aviso = document.getElementById('avisoCamera');
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                stream = await obterStreamCamera({ video: { facingMode: 'user' }, audio: false });
                 video.srcObject = stream;
+                await video.play().catch(() => {});
+                if (aviso) aviso.classList.add('hidden');
             } catch (err) {
-                alert("Erro ao acessar a câmera. Verifique as permissões.");
+                console.error(err);
+                const msg = mensagemErroCamera(err);
+                if (aviso) {
+                    aviso.textContent = msg;
+                    aviso.classList.remove('hidden');
+                }
+                alert(msg);
             }
+        }
+
+        function textoBotaoCaptura(n) {
+            return 'Capturar foto (<span id="contagemFotos">' + n + '</span>/3)';
         }
 
         btnCapturar.addEventListener('click', async () => {
             if (fotosCapturadas.length >= 3) return;
-
             const textoOriginal = btnCapturar.innerHTML;
             btnCapturar.disabled = true;
-            btnCapturar.classList.add('opacity-50', 'cursor-not-allowed');
-            btnCapturar.innerHTML = '⏳ Processando IA...';
+            btnCapturar.innerHTML = 'Processando...';
 
             try {
-                // 1. A IA analisa o vídeo
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor();
+                const detection = await faceapi
+                    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.3 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
 
                 if (!detection) {
-                    alert("Nenhum rosto detectado! A iluminação pode estar muito escura ou com muita sombra.");
+                    alert('Nenhum rosto detectado. Melhore a iluminação e tente novamente.');
                     btnCapturar.disabled = false;
-                    btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
                     btnCapturar.innerHTML = textoOriginal;
                     return;
                 }
 
-                // 2. Extrai a imagem para a galeria
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-                // 3. Guarda as informações
                 fotosCapturadas.push(dataUrl);
                 faceDescriptors.push(detection.descriptor);
 
-                // Exibe a miniatura na tela
                 const imgEl = document.createElement('img');
                 imgEl.src = dataUrl;
-                imgEl.className = 'rounded border-2 border-indigo-200 object-cover w-full aspect-square';
                 document.getElementById('galeriaFotos').appendChild(imgEl);
 
-                // 4. Verifica se já tirou as 3
                 if (fotosCapturadas.length >= 3) {
-                    btnCapturar.innerHTML = '✅ Captura Concluída';
+                    btnCapturar.innerHTML = 'Captura concluída';
                     btnSalvar.disabled = false;
                 } else {
                     btnCapturar.disabled = false;
-                    btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
-                    // Recriamos o span aqui com o número novo!
-                    btnCapturar.innerHTML = `📸 Capturar Foto (<span id="contagemFotos">${fotosCapturadas.length}</span>/3)`;
+                    btnCapturar.innerHTML = textoBotaoCaptura(fotosCapturadas.length);
                 }
-
             } catch (erro) {
-                console.error("Erro interno:", erro);
-                alert("Erro técnico: " + erro.message);
+                console.error(erro);
+                alert('Erro técnico: ' + erro.message);
                 btnCapturar.disabled = false;
-                btnCapturar.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnCapturar.innerHTML = textoOriginal;
             }
         });
 
-        async function enviarCadastro(event) {
-            event.preventDefault();
-            btnSalvar.disabled = true;
-            btnSalvar.innerText = "⏳ Salvando dados...";
-
-            let meanDescriptor = new Float32Array(128).fill(0);
-            faceDescriptors.forEach(desc => {
-                for (let i = 0; i < 128; i++) meanDescriptor[i] += desc[i];
-            });
-            for (let i = 0; i < 128; i++) meanDescriptor[i] /= faceDescriptors.length;
-
-            const dadosIdoso = {
+        function montarPayload(incluirBiometria) {
+            const dados = {
                 nomeCompleto: document.getElementById('nomeCompleto').value,
                 dataNascimento: document.getElementById('dataNascimento').value,
-                fotosBase64: fotosCapturadas,
-                faceDescriptor: Array.from(meanDescriptor),
                 anamnese: {
                     tipoSanguineo: document.getElementById('tipoSanguineo').value,
-                    alergias: document.getElementById('alergias').value.split(',').map(a => a.trim()).filter(a => a),
-                    medicamentosUsoContinuo: document.getElementById('medicamentos').value.split(',').map(m => m.trim()).filter(m => m)
+                    alergias: document.getElementById('alergias').value.split(',').map(a => a.trim()).filter(Boolean),
+                    medicamentosUsoContinuo: document.getElementById('medicamentos').value.split(',').map(m => m.trim()).filter(Boolean)
                 }
             };
 
-            try {
-                const response = await fetch('/api/idosos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosIdoso)
+            if (incluirBiometria) {
+                let meanDescriptor = new Float32Array(128).fill(0);
+                faceDescriptors.forEach(desc => {
+                    for (let i = 0; i < 128; i++) meanDescriptor[i] += desc[i];
                 });
+                for (let i = 0; i < 128; i++) meanDescriptor[i] /= faceDescriptors.length;
+                dados.fotosBase64 = fotosCapturadas;
+                dados.faceDescriptor = Array.from(meanDescriptor);
+            }
+
+            return dados;
+        }
+
+        async function enviarCadastro(event) {
+            event.preventDefault();
+
+            const atualizarBio = !modoEdicao || chkAtualizarBio.checked;
+            if (atualizarBio && fotosCapturadas.length < 3) {
+                alert('Capture 3 fotos para salvar a biometria.');
+                mudarAba(3);
+                return;
+            }
+
+            const botao = event.submitter || btnSalvar;
+            botao.disabled = true;
+            const textoOriginal = botao.innerText;
+            botao.innerText = 'Salvando...';
+
+            try {
+                let response;
+                if (modoEdicao) {
+                    response = await fetchAutenticado('/api/idosos/' + idEditando, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(montarPayload(atualizarBio))
+                    });
+                } else {
+                    response = await fetchAutenticado('/api/idosos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(montarPayload(true))
+                    });
+                }
 
                 if (response.ok) {
-                    // SUCESSO: Esconde o formulário e as abas, e mostra a tela gigante de sucesso!
-                    document.getElementById('formCadastro').style.display = 'none';
-                    document.querySelector('.flex.border-b').style.display = 'none'; // Esconde os botões das abas
-                    document.getElementById('telaSucesso').classList.remove('hidden');
+                    mostrarSucesso(
+                        modoEdicao ? 'Alterações salvas' : 'Cadastro concluído',
+                        modoEdicao
+                            ? 'Os dados do participante foram atualizados.'
+                            : 'O participante foi registrado com sucesso.'
+                    );
+                    modoEdicao = false;
+                    idEditando = null;
                 } else {
                     const err = await response.json();
-                    alert('Erro: ' + err.erro);
-                    btnSalvar.disabled = false;
-                    btnSalvar.innerText = "✅ Salvar Cadastro";
+                    alert('Erro: ' + (err.erro || 'falha ao salvar'));
+                    botao.disabled = false;
+                    botao.innerText = textoOriginal;
                 }
             } catch (error) {
                 alert('Erro de conexão com o servidor.');
-                btnSalvar.disabled = false;
-                btnSalvar.innerText = "✅ Salvar Cadastro";
+                botao.disabled = false;
+                botao.innerText = textoOriginal;
             }
         }
     </script>
 </body>
-
 </html>

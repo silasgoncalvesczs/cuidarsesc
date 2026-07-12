@@ -1,124 +1,111 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Presença - CUIDAR SESC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0fdf4;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/tema.js"></script>
+    <script src="/js/face-api.min.js"></script>
 </head>
-
-<body class="text-gray-800 min-h-screen flex flex-col overflow-hidden">
-
-    <!-- Barra Superior -->
-    <nav class="bg-green-700 text-white p-4 shadow-md flex justify-between items-center h-16">
-        <a href="/" class="text-white hover:text-green-200 font-bold text-xl">&larr; Voltar</a>
-        <h1 class="text-2xl font-bold tracking-wide">Totem de Presença Automática</h1>
-        <div style="width: 60px;"></div>
-    </nav>
-
-    <div id="loadingIA" class="bg-blue-100 text-blue-800 p-3 font-bold text-center text-lg shadow">
-        ⏳ Inicializando sensores e Inteligência Artificial...
-    </div>
-
-    <!-- Layout Principal -->
-    <main
-        class="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch h-[calc(100vh-80px)] max-h-[calc(100vh-80px)]">
-
-        <!-- COLUNA 1: CONFIGURAÇÕES -->
-        <div
-            class="bg-white rounded-2xl shadow-lg p-5 flex flex-col justify-between border border-gray-100 h-full overflow-y-auto">
-            <div>
-                <h2 class="text-xl font-bold text-green-800 mb-4 border-b pb-2">Atividade</h2>
-                <div class="mb-4">
-                    <label class="block text-gray-600 font-semibold mb-2 text-sm">Selecione o Evento:</label>
-                    <select id="selectAtividade" onchange="verificarNovaAtividade(this.value)"
-                        class="w-full px-3 py-2 rounded-xl border border-gray-300 text-base bg-gray-50 outline-none">
-                        <option value="">Carregando...</option>
-                    </select>
-                </div>
-
-                <div id="campoNovaAtividade" class="hidden bg-yellow-50 p-3 rounded-xl border border-yellow-200 mb-4">
-                    <label class="block text-yellow-800 font-bold mb-1 text-sm">Nome da Atividade:</label>
-                    <input type="text" id="inputNovaAtividade"
-                        class="w-full px-3 py-2 rounded-xl border border-yellow-300 text-base outline-none"
-                        placeholder="Ex: Informática Sênior">
-                    <button type="button" onclick="salvarAtividadeRapida()"
-                        class="mt-2 w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded-lg text-sm">
-                        + Ativar Evento
-                    </button>
-                </div>
-
-                <div id="avisoSemAtividade"
-                    class="hidden bg-red-50 text-red-700 text-sm p-3 rounded-xl border border-red-200">
-                    ⚠️ Nenhuma atividade selecionada. O scanner só funciona depois de escolher (ou criar) uma atividade
-                    acima.
-                </div>
+<body class="totem-page">
+    <div class="app-shell totem-shell">
+        <header class="topbar topbar-compact">
+            <a class="topbar-link" href="/">
+                <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
+                Voltar
+            </a>
+            <h1>Totem de Presença</h1>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-btn" id="btnTemaTopbar" onclick="alternarTema()">
+                    <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
+                    <span id="labelTemaTopbar">Escuro</span>
+                </button>
+                <a class="topbar-btn" href="/conta.html">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
+                    Conta
+                </a>
+                <button type="button" class="topbar-btn" onclick="logout()">
+                    <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
+                    Sair
+                </button>
             </div>
+        </header>
 
-            <div class="p-3 rounded-xl bg-gray-50 text-center border">
-                <span class="text-xs uppercase font-bold tracking-wider text-gray-400 block mb-1">Status do
-                    Sensor</span>
-                <div id="statusScanner" class="text-base font-bold text-red-600">🔴 Aguardando Atividade</div>
-            </div>
-        </div>
+        <div id="loadingIA" class="banner banner-info totem-loading">Inicializando reconhecimento facial...</div>
 
-        <!-- COLUNA 2 e 3: CÂMERA -->
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-4 flex flex-col border border-gray-100 h-full">
-            <div class="flex-1 bg-black rounded-xl overflow-hidden shadow-inner relative min-h-0">
-                <video id="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
-                <canvas id="canvasAuxiliar" class="hidden"></canvas>
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div
-                        class="w-64 h-64 md:w-80 md:h-80 border-4 border-dashed border-green-400 opacity-50 rounded-full">
+        <main class="totem-layout">
+            <section class="panel panel-tight stack-col">
+                <div class="flex-1" style="overflow:auto;min-height:0">
+                    <h2 class="section-title">Atividade</h2>
+                    <div class="field">
+                        <label for="selectAtividade">Selecione o evento</label>
+                        <select id="selectAtividade" onchange="verificarNovaAtividade(this.value)">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+
+                    <div id="campoNovaAtividade" class="banner banner-warn hidden mt-2" style="text-align:left">
+                        <div class="field">
+                            <label for="inputNovaAtividade">Nome da atividade</label>
+                            <input type="text" id="inputNovaAtividade" placeholder="Ex: Informática Sênior">
+                        </div>
+                        <button type="button" class="btn btn-secondary w-full mt-1" onclick="salvarAtividadeRapida()">Criar e ativar</button>
+                    </div>
+
+                    <div id="avisoSemAtividade" class="banner banner-danger hidden mt-2">
+                        Selecione ou crie uma atividade para iniciar o scanner.
                     </div>
                 </div>
-            </div>
 
-            <div id="painelResultado"
-                class="mt-4 p-3 rounded-xl border-2 text-center bg-gray-50 border-gray-200 h-20 flex flex-col justify-center items-center shrink-0">
-                <div id="iconeResultado" class="text-2xl">🤖</div>
-                <h3 id="textoResultado" class="text-lg font-bold text-gray-500">Aproxime seu rosto para registrar</h3>
-            </div>
-        </div>
+                <div class="banner banner-info totem-status">
+                    <small style="display:block;opacity:.8;margin-bottom:.25rem">Status do sensor</small>
+                    <div id="statusScanner" class="status-dot status-off">Aguardando atividade</div>
+                </div>
+            </section>
 
-        <!-- COLUNA 4: HISTÓRICO -->
-        <div class="bg-white rounded-2xl shadow-lg p-5 flex flex-col border border-gray-100 h-full">
-            <h2 class="text-xl font-bold text-blue-800 mb-4 border-b pb-2">🕒 Histórico de Entrada</h2>
-            <div id="listaUltimosRegistros" class="space-y-3 flex-1 overflow-y-auto pr-1">
-                <p class="text-gray-400 text-center py-12 text-sm">Nenhum registro nesta sessão.</p>
-            </div>
-        </div>
+            <section class="panel panel-tight stack-col totem-camera-col">
+                <div class="camera-frame tall">
+                    <video id="videoElement" autoplay playsinline muted></video>
+                    <canvas id="canvasAuxiliar" class="hidden"></canvas>
+                    <div id="avisoCamera" class="camera-overlay hidden"></div>
+                    <div class="camera-guide"><span></span></div>
+                </div>
 
-    </main>
+                <div id="painelResultado" class="result-panel">
+                    <span id="iconeResultado" class="icon-mask icon" style="mask-image:url('/icons/face.svg');-webkit-mask-image:url('/icons/face.svg')"></span>
+                    <strong id="textoResultado">Aproxime o rosto para registrar</strong>
+                </div>
+            </section>
 
-    <!-- MODAL DE CONFIRMAÇÃO -->
-    <div id="modalConfirmacao"
-        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-6">
-        <div class="bg-white rounded-3xl shadow-2xl p-10 max-w-lg w-full text-center">
-            <div class="text-7xl mb-4">🙂</div>
-            <h2 id="textoConfirmacao" class="text-3xl font-bold text-gray-800 mb-8">Você é Maria?</h2>
-            <div class="grid grid-cols-2 gap-6">
-                <button type="button" onclick="responderConfirmacao(true)"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-8 rounded-2xl text-4xl shadow-lg transition transform hover:-translate-y-1">
-                    ✅ Sim
-                </button>
-                <button type="button" onclick="responderConfirmacao(false)"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-8 rounded-2xl text-4xl shadow-lg transition transform hover:-translate-y-1">
-                    ❌ Não
-                </button>
+            <section class="panel panel-tight stack-col">
+                <h2 class="section-title">Últimas entradas</h2>
+                <div id="listaUltimosRegistros" class="history-list">
+                    <p class="center lead">Nenhum registro nesta sessão.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modalConfirmacao" class="modal hidden">
+        <div class="modal-card">
+            <span class="icon-mask icon-xl" style="margin:0 auto;color:var(--brand);mask-image:url('/icons/face.svg');-webkit-mask-image:url('/icons/face.svg')"></span>
+            <h2 id="textoConfirmacao">Você é Maria?</h2>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-success btn-xl" onclick="responderConfirmacao(true)">Sim</button>
+                <button type="button" class="btn btn-danger btn-xl" onclick="responderConfirmacao(false)">Não</button>
             </div>
         </div>
     </div>
 
+    <script src="/js/auth.js"></script>
+    <script src="/js/face-init.js"></script>
+    <script src="/js/camera.js"></script>
     <script>
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin', 'gestor', 'operador']);
+        }
+
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasAuxiliar');
         const selectAtividade = document.getElementById('selectAtividade');
@@ -130,32 +117,47 @@
         const avisoSemAtividade = document.getElementById('avisoSemAtividade');
         const modalConfirmacao = document.getElementById('modalConfirmacao');
         const textoConfirmacao = document.getElementById('textoConfirmacao');
+        const iconeResultado = document.getElementById('iconeResultado');
 
-        let idAtividadeAtiva = "";
+        let idAtividadeAtiva = '';
         let loopReconhecimento = null;
         let timestampUltimoReconhecimento = 0;
         let listaPresencasLocais = [];
         let aguardandoConfirmacao = false;
-        let candidatoAtual = null; // { idosoId, nomeUsuario, distancia }
-        let registrosRecentes = new Map(); // idosoId -> timestamp da última confirmação
-        const COOLDOWN_POR_PESSOA_MS = 2 * 60 * 1000; // 2 minutos
+        let candidatoAtual = null;
+        let registrosRecentes = new Map();
+        const COOLDOWN_POR_PESSOA_MS = 2 * 60 * 1000;
+
+        function setIcon(el, name) {
+            el.style.maskImage = "url('/icons/" + name + ".svg')";
+            el.style.webkitMaskImage = "url('/icons/" + name + ".svg')";
+        }
 
         async function iniciarCamera() {
+            const aviso = document.getElementById('avisoCamera');
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: 640, height: 480 }
+                const stream = await obterStreamCamera({
+                    video: { facingMode: 'user', width: 640, height: 480 },
+                    audio: false
                 });
                 video.srcObject = stream;
+                await video.play().catch(() => {});
+                if (aviso) aviso.classList.add('hidden');
             } catch (err) {
-                alert("Erro ao acessar a câmera. Verifique se o navegador tem permissão de câmera para este site.");
-                console.error("Erro ao acessar câmera:", err);
+                console.error(err);
+                const msg = mensagemErroCamera(err);
+                if (aviso) {
+                    aviso.textContent = msg;
+                    aviso.classList.remove('hidden');
+                }
+                alert(msg);
             }
         }
 
         async function carregarAtividades() {
             try {
-                const response = await fetch('/api/atividades');
-                if (!response.ok) throw new Error('Resposta HTTP ' + response.status);
+                const response = await fetchAutenticado('/api/atividades');
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 const atividades = await response.json();
 
                 selectAtividade.innerHTML = '<option value="">-- Escolha uma atividade --</option>';
@@ -166,8 +168,8 @@
                     selectAtividade.appendChild(option);
                 });
                 const optionNova = document.createElement('option');
-                optionNova.value = "NOVA";
-                optionNova.innerText = "➕ [Criar Nova Atividade...]";
+                optionNova.value = 'NOVA';
+                optionNova.innerText = '[Criar nova atividade...]';
                 selectAtividade.appendChild(optionNova);
 
                 if (atividades.length === 0) {
@@ -175,12 +177,12 @@
                 }
             } catch (erro) {
                 selectAtividade.innerHTML = '<option value="">Erro ao carregar</option>';
-                console.error("Erro ao carregar atividades:", erro);
+                console.error(erro);
             }
         }
 
         function verificarNovaAtividade(valor) {
-            if (valor === "NOVA") {
+            if (valor === 'NOVA') {
                 campoNovaAtividade.classList.remove('hidden');
                 pararScannerAutomático();
             } else {
@@ -200,7 +202,7 @@
             if (!nome) return;
 
             try {
-                const response = await fetch('/api/atividades', {
+                const response = await fetchAutenticado('/api/atividades', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome: nome, categoria: 'Outros' })
@@ -209,106 +211,89 @@
                 await carregarAtividades();
                 selectAtividade.value = novaAtiv._id;
                 campoNovaAtividade.classList.add('hidden');
-                inputNovaAtividade.value = "";
+                inputNovaAtividade.value = '';
                 avisoSemAtividade.classList.add('hidden');
                 idAtividadeAtiva = novaAtiv._id;
                 iniciarScannerAutomático();
             } catch (e) {
-                console.error("Erro ao criar atividade:", e);
-                alert("Erro ao criar atividade.");
+                console.error(e);
+                alert('Erro ao criar atividade.');
             }
         }
 
         function iniciarScannerAutomático() {
             if (loopReconhecimento) clearInterval(loopReconhecimento);
-            statusScanner.innerHTML = '🟢 Scanner Ativo';
-            statusScanner.className = 'text-base font-bold text-green-600';
+            statusScanner.innerText = 'Scanner ativo';
+            statusScanner.className = 'status-dot status-on';
             loopReconhecimento = setInterval(executarReconhecimentoAutomatico, 1500);
         }
 
         function pararScannerAutomático() {
             if (loopReconhecimento) clearInterval(loopReconhecimento);
             loopReconhecimento = null;
-            idAtividadeAtiva = "";
-            statusScanner.innerHTML = '🔴 Aguardando Atividade';
-            statusScanner.className = 'text-base font-bold text-red-600';
+            idAtividadeAtiva = '';
+            statusScanner.innerText = 'Aguardando atividade';
+            statusScanner.className = 'status-dot status-off';
         }
 
         async function executarReconhecimentoAutomatico() {
-            console.log('Loop rodando. idAtividadeAtiva:', idAtividadeAtiva, '| aguardandoConfirmacao:', aguardandoConfirmacao);
-
-            if (!idAtividadeAtiva) return;
-            if (aguardandoConfirmacao) return;
+            if (!idAtividadeAtiva || aguardandoConfirmacao) return;
             if (Date.now() - timestampUltimoReconhecimento < 5000) return;
 
             try {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                console.log('Dimensões do vídeo:', video.videoWidth, 'x', video.videoHeight);
+                if (canvas.width === 0 || canvas.height === 0) return;
 
-                if (canvas.width === 0 || canvas.height === 0) {
-                    console.log('Vídeo ainda sem dimensões, pulando este ciclo.');
-                    return;
-                }
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
                 const detection = await faceapi
                     .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.1 }))
                     .withFaceLandmarks()
                     .withFaceDescriptor();
 
-                console.log('Tentativa de detecção:', detection ? 'ROSTO ENCONTRADO' : 'nenhum rosto detectado');
-
                 if (!detection) {
-                    document.getElementById('textoResultado').innerText = "Aproxime seu rosto para registrar";
-                    document.getElementById('iconeResultado').innerText = '🤖';
-                    painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-gray-50 border-gray-200 h-20 flex flex-col justify-center items-center";
+                    document.getElementById('textoResultado').innerText = 'Aproxime o rosto para registrar';
+                    setIcon(iconeResultado, 'face');
+                    painelResultado.className = 'result-panel';
                     return;
                 }
 
-                document.getElementById('textoResultado').innerText = "Identificando usuário...";
+                document.getElementById('textoResultado').innerText = 'Identificando...';
 
-                const response = await fetch(`/api/presencas/identificar?t=${Date.now()}`, {
+                const response = await fetchAutenticado('/api/presencas/identificar?t=' + Date.now(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        faceDescriptor: Array.from(detection.descriptor)
-                    })
+                    body: JSON.stringify({ faceDescriptor: Array.from(detection.descriptor) })
                 });
 
                 const resultado = await response.json();
-                console.log('Resposta do backend:', resultado);
 
                 if (response.ok && resultado.sucesso) {
                     const ultimaVez = registrosRecentes.get(resultado.idosoId);
                     const agora = Date.now();
 
                     if (ultimaVez && (agora - ultimaVez) < COOLDOWN_POR_PESSOA_MS) {
-                        // Já confirmou recentemente, não mostra o modal de novo
-                        const segundosRestantes = Math.ceil((COOLDOWN_POR_PESSOA_MS - (agora - ultimaVez)) / 1000);
-                        document.getElementById('textoResultado').innerText = `${resultado.nomeUsuario} já registrou presença.`;
-                        document.getElementById('iconeResultado').innerText = 'ℹ️';
-                        painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-blue-50 border-blue-300 h-20 flex flex-col justify-center items-center font-bold text-lg";
+                        document.getElementById('textoResultado').innerText = resultado.nomeUsuario + ' já registrou presença.';
+                        setIcon(iconeResultado, 'info');
+                        painelResultado.className = 'result-panel result-info';
                         return;
                     }
 
                     abrirConfirmacao(resultado);
                 } else {
-                    mostrarResultadoVisivel(false, resultado.erro || "Rosto não reconhecido.");
+                    mostrarResultadoVisivel(false, resultado.erro || 'Rosto não reconhecido.');
                 }
-
             } catch (err) {
-                console.error("Erro no processamento:", err);
-                mostrarResultadoVisivel(false, "Erro de conexão com o servidor.");
+                console.error(err);
+                mostrarResultadoVisivel(false, 'Erro de conexão com o servidor.');
             }
         }
 
         function abrirConfirmacao(resultado) {
             aguardandoConfirmacao = true;
-            candidatoAtual = resultado; // { idosoId, nomeUsuario, distancia }
-            textoConfirmacao.innerText = `Você é ${resultado.nomeUsuario}?`;
+            candidatoAtual = resultado;
+            textoConfirmacao.innerText = 'Você é ' + resultado.nomeUsuario + '?';
             modalConfirmacao.classList.remove('hidden');
         }
 
@@ -317,7 +302,7 @@
 
             if (confirmou && candidatoAtual) {
                 try {
-                    const response = await fetch('/api/presencas/confirmar', {
+                    const response = await fetchAutenticado('/api/presencas/confirmar', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -330,18 +315,18 @@
                     if (response.ok) {
                         registrosRecentes.set(candidatoAtual.idosoId, Date.now());
                         timestampUltimoReconhecimento = Date.now();
-                        mostrarResultadoVisivel(true, `Bem-vindo(a), ${candidatoAtual.nomeUsuario}!`);
+                        mostrarResultadoVisivel(true, 'Bem-vindo(a), ' + candidatoAtual.nomeUsuario + '!');
                         adicionarNaBarraLateral(candidatoAtual.nomeUsuario);
                     } else {
-                        mostrarResultadoVisivel(false, "Erro ao confirmar presença.");
+                        mostrarResultadoVisivel(false, 'Erro ao confirmar presença.');
                     }
                 } catch (err) {
-                    console.error("Erro ao confirmar presença:", err);
-                    mostrarResultadoVisivel(false, "Erro de conexão ao confirmar.");
+                    console.error(err);
+                    mostrarResultadoVisivel(false, 'Erro de conexão ao confirmar.');
                 }
             } else {
                 timestampUltimoReconhecimento = Date.now();
-                mostrarResultadoVisivel(false, "Ok, tente novamente.");
+                mostrarResultadoVisivel(false, 'Tente novamente.');
             }
 
             aguardandoConfirmacao = false;
@@ -350,48 +335,45 @@
 
         function mostrarResultadoVisivel(sucesso, mensagem) {
             if (sucesso) {
-                painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-green-100 border-green-500 text-green-800 h-20 flex flex-col justify-center items-center font-bold text-lg animate-bounce";
-                document.getElementById('iconeResultado').innerText = '✅';
+                painelResultado.className = 'result-panel result-ok';
+                setIcon(iconeResultado, 'check');
             } else {
-                painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-red-100 border-red-500 text-red-800 h-20 flex flex-col justify-center items-center font-bold text-lg";
-                document.getElementById('iconeResultado').innerText = '❌';
+                painelResultado.className = 'result-panel result-err';
+                setIcon(iconeResultado, 'x');
             }
             document.getElementById('textoResultado').innerText = mensagem;
         }
 
         function adicionarNaBarraLateral(nome) {
-            const agora = new Date();
-            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const horaFormatada = new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
 
             listaPresencasLocais.unshift({ nome: nome, hora: horaFormatada });
             if (listaPresencasLocais.length > 10) listaPresencasLocais.pop();
 
-            listaUltimosRegistros.innerHTML = "";
+            listaUltimosRegistros.innerHTML = '';
             listaPresencasLocais.forEach(p => {
                 const item = document.createElement('div');
-                item.className = "bg-blue-50 border-l-4 border-blue-500 p-3 rounded flex justify-between items-center shadow-sm";
-                item.innerHTML = `
-                    <span class="font-bold text-gray-800 truncate max-w-[150px]">${p.nome}</span>
-                    <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-mono">${p.hora}</span>
-                `;
+                item.className = 'history-item';
+                item.innerHTML = '<span>' + p.nome + '</span><span>' + p.hora + '</span>';
                 listaUltimosRegistros.appendChild(item);
             });
         }
 
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-        Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]).then(() => {
-            document.getElementById('loadingIA').style.display = 'none';
-            iniciarCamera();
-            carregarAtividades();
-        }).catch((err) => {
-            document.getElementById('loadingIA').innerText = '❌ Falha crítica ao carregar Inteligência Artificial.';
-            console.error("Erro ao carregar modelos de IA:", err);
-        });
+        carregarFaceApi('/models')
+            .then(() => {
+                document.getElementById('loadingIA').style.display = 'none';
+                iniciarCamera();
+                carregarAtividades();
+            })
+            .catch((err) => {
+                const el = document.getElementById('loadingIA');
+                el.className = 'banner banner-danger';
+                el.style.borderRadius = '0';
+                el.innerText = 'Falha ao carregar IA: ' + err.message;
+                console.error(err);
+            });
     </script>
 </body>
-
 </html>

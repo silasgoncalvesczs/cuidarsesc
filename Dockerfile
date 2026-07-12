@@ -6,6 +6,7 @@ WORKDIR /app
 # Instala dependências do sistema que podem ser úteis para manipulação de imagens depois
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia os arquivos de dependências do Node (vamos criá-los em seguida)
@@ -17,7 +18,7 @@ RUN npm install
 # Copia o restante do código
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3000 3443
 
 # Comando para rodar em modo de desenvolvimento (reinicia sozinho ao salvar o código)
 CMD ["npm", "run", "dev"]

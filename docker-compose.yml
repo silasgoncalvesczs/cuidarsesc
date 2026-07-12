@@ -17,14 +17,19 @@ services:
     container_name: cuidar_sesc_app
     ports:
       - "3000:3000"
+      - "3443:3443"
     environment:
       - PORT=3000
+      - HTTPS_PORT=3443
       - MONGO_URI=mongodb://mongodb:27017/cuidar_sesc
+      # IP da máquina na rede local (ajuste se necessário)
+      - HOST_IP=${HOST_IP:-}
     env_file:
       - .env
     volumes:
       - ./src:/app/src
       - ./uploads:/app/uploads
+      - ./certs:/app/certs
     depends_on:
       - mongodb
     restart: unless-stopped

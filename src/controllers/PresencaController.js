@@ -47,7 +47,7 @@ module.exports = {
                 });
             }
 
-            return res.status(401).json({ erro: 'Rosto não reconhecido.' });
+            return res.status(404).json({ erro: 'Rosto não reconhecido.' });
 
         } catch (error) {
             console.error('Erro ao identificar rosto:', error);
