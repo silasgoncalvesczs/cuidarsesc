@@ -77,23 +77,33 @@
 
     <script src="/js/auth.js"></script>
     <script>
-        exigirPerfil(['admin']);
+        // O ideal é ter a função exigindo perfil, garantindo que auth.js lidou com ela
+        if (typeof exigirPerfil === 'function') {
+            exigirPerfil(['admin']);
+        }
 
         async function carregarUsuarios() {
-            const response = await fetchAutenticado('/api/usuarios');
-            const usuarios = await response.json();
-            const tbody = document.getElementById('listaUsuarios');
-            tbody.innerHTML = '';
-            usuarios.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b';
-                tr.innerHTML = `
-                    <td class="py-2">${u.nome}</td>
-                    <td class="py-2">${u.email}</td>
-                    <td class="py-2 capitalize">${u.perfil}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+            try {
+                const response = await fetchAutenticado('/api/usuarios');
+                const usuarios = await response.json();
+                const tbody = document.getElementById('listaUsuarios');
+                tbody.innerHTML = '';
+
+                if (Array.isArray(usuarios)) {
+                    usuarios.forEach(u => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b';
+                        tr.innerHTML = `
+                            <td class="py-2">${u.nome}</td>
+                            <td class="py-2">${u.email}</td>
+                            <td class="py-2 capitalize">${u.perfil}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar lista de usuários:', error);
+            }
         }
 
         async function criarUsuario(event) {
@@ -121,11 +131,24 @@
                     mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-green-50 text-green-700';
                     mensagem.innerText = 'Usuário criado com sucesso!';
                     document.getElementById('formNovoUsuario').reset();
-                    carregarUsuarios();
+                    carregarUsuarios(); // Recarrega a tabela para mostrar o novo
                 } else {
                     mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-red-50 text-red-700';
                     mensagem.innerText = resultado.erro || 'Erro ao criar usuário.';
                 }
                 mensagem.classList.remove('hidden');
             } catch (err) {
-                mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg
+                // Aqui era onde o código original estava cortado
+                mensagem.className = 'md:col-span-2 p-3 rounded-lg text-sm bg-red-50 text-red-700';
+                mensagem.innerText = 'Erro de conexão com o servidor ao tentar criar usuário.';
+                mensagem.classList.remove('hidden');
+                console.error(err);
+            }
+        }
+
+        // Adiciona um evento para carregar a lista de usuários assim que a página abrir
+        document.addEventListener('DOMContentLoaded', carregarUsuarios);
+    </script>
+</body>
+
+</html>
