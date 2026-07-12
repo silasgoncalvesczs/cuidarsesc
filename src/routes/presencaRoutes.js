@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const PresencaController = require('../controllers/PresencaController');
 
-// Rota que vai receber o rosto e devolver o nome
-router.post('/reconhecer', PresencaController.reconhecer);
+router.post('/identificar', PresencaController.identificar);
+router.post('/confirmar', PresencaController.confirmar);
 
 module.exports = router;

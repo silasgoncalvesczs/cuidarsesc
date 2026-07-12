@@ -28,11 +28,11 @@
         ⏳ Inicializando sensores e Inteligência Artificial...
     </div>
 
-    <!-- Layout Principal Ajustado para Caber em Qualquer Tela Sem Rolagem -->
+    <!-- Layout Principal -->
     <main
         class="flex-1 container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch h-[calc(100vh-80px)] max-h-[calc(100vh-80px)]">
 
-        <!-- COLUNA 1: CONFIGURAÇÕES (Largura 1/4) -->
+        <!-- COLUNA 1: CONFIGURAÇÕES -->
         <div
             class="bg-white rounded-2xl shadow-lg p-5 flex flex-col justify-between border border-gray-100 h-full overflow-y-auto">
             <div>
@@ -55,6 +55,12 @@
                         + Ativar Evento
                     </button>
                 </div>
+
+                <div id="avisoSemAtividade"
+                    class="hidden bg-red-50 text-red-700 text-sm p-3 rounded-xl border border-red-200">
+                    ⚠️ Nenhuma atividade selecionada. O scanner só funciona depois de escolher (ou criar) uma atividade
+                    acima.
+                </div>
             </div>
 
             <div class="p-3 rounded-xl bg-gray-50 text-center border">
@@ -64,16 +70,11 @@
             </div>
         </div>
 
-        <!-- COLUNA 2 e 3: CÂMERA CENTRALIZADA (Largura 2/4) -->
+        <!-- COLUNA 2 e 3: CÂMERA -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-4 flex flex-col border border-gray-100 h-full">
-            <!-- Container da Câmera com tamanho controlado -->
             <div class="flex-1 bg-black rounded-xl overflow-hidden shadow-inner relative min-h-0">
                 <video id="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
-
-                <!-- Canvas invisível essencial para a IA funcionar nos bastidores -->
                 <canvas id="canvasAuxiliar" class="hidden"></canvas>
-
-                <!-- Moldura guia virtual centralizada -->
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div
                         class="w-64 h-64 md:w-80 md:h-80 border-4 border-dashed border-green-400 opacity-50 rounded-full">
@@ -81,7 +82,6 @@
                 </div>
             </div>
 
-            <!-- Painel de Resposta Fixo Abaixo da Câmera -->
             <div id="painelResultado"
                 class="mt-4 p-3 rounded-xl border-2 text-center bg-gray-50 border-gray-200 h-20 flex flex-col justify-center items-center shrink-0">
                 <div id="iconeResultado" class="text-2xl">🤖</div>
@@ -89,7 +89,7 @@
             </div>
         </div>
 
-        <!-- COLUNA 4: HISTÓRICO (Largura 1/4) -->
+        <!-- COLUNA 4: HISTÓRICO -->
         <div class="bg-white rounded-2xl shadow-lg p-5 flex flex-col border border-gray-100 h-full">
             <h2 class="text-xl font-bold text-blue-800 mb-4 border-b pb-2">🕒 Histórico de Entrada</h2>
             <div id="listaUltimosRegistros" class="space-y-3 flex-1 overflow-y-auto pr-1">
@@ -98,6 +98,25 @@
         </div>
 
     </main>
+
+    <!-- MODAL DE CONFIRMAÇÃO -->
+    <div id="modalConfirmacao"
+        class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-6">
+        <div class="bg-white rounded-3xl shadow-2xl p-10 max-w-lg w-full text-center">
+            <div class="text-7xl mb-4">🙂</div>
+            <h2 id="textoConfirmacao" class="text-3xl font-bold text-gray-800 mb-8">Você é Maria?</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <button type="button" onclick="responderConfirmacao(true)"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-8 rounded-2xl text-4xl shadow-lg transition transform hover:-translate-y-1">
+                    ✅ Sim
+                </button>
+                <button type="button" onclick="responderConfirmacao(false)"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-8 rounded-2xl text-4xl shadow-lg transition transform hover:-translate-y-1">
+                    ❌ Não
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const video = document.getElementById('videoElement');
@@ -108,11 +127,18 @@
         const statusScanner = document.getElementById('statusScanner');
         const painelResultado = document.getElementById('painelResultado');
         const listaUltimosRegistros = document.getElementById('listaUltimosRegistros');
+        const avisoSemAtividade = document.getElementById('avisoSemAtividade');
+        const modalConfirmacao = document.getElementById('modalConfirmacao');
+        const textoConfirmacao = document.getElementById('textoConfirmacao');
 
         let idAtividadeAtiva = "";
         let loopReconhecimento = null;
         let timestampUltimoReconhecimento = 0;
         let listaPresencasLocais = [];
+        let aguardandoConfirmacao = false;
+        let candidatoAtual = null; // { idosoId, nomeUsuario, distancia }
+        let registrosRecentes = new Map(); // idosoId -> timestamp da última confirmação
+        const COOLDOWN_POR_PESSOA_MS = 2 * 60 * 1000; // 2 minutos
 
         async function iniciarCamera() {
             try {
@@ -121,13 +147,15 @@
                 });
                 video.srcObject = stream;
             } catch (err) {
-                alert("Erro ao acessar a câmera.");
+                alert("Erro ao acessar a câmera. Verifique se o navegador tem permissão de câmera para este site.");
+                console.error("Erro ao acessar câmera:", err);
             }
         }
 
         async function carregarAtividades() {
             try {
                 const response = await fetch('/api/atividades');
+                if (!response.ok) throw new Error('Resposta HTTP ' + response.status);
                 const atividades = await response.json();
 
                 selectAtividade.innerHTML = '<option value="">-- Escolha uma atividade --</option>';
@@ -141,8 +169,13 @@
                 optionNova.value = "NOVA";
                 optionNova.innerText = "➕ [Criar Nova Atividade...]";
                 selectAtividade.appendChild(optionNova);
+
+                if (atividades.length === 0) {
+                    avisoSemAtividade.classList.remove('hidden');
+                }
             } catch (erro) {
                 selectAtividade.innerHTML = '<option value="">Erro ao carregar</option>';
+                console.error("Erro ao carregar atividades:", erro);
             }
         }
 
@@ -153,6 +186,7 @@
             } else {
                 campoNovaAtividade.classList.add('hidden');
                 if (valor) {
+                    avisoSemAtividade.classList.add('hidden');
                     idAtividadeAtiva = valor;
                     iniciarScannerAutomático();
                 } else {
@@ -176,15 +210,17 @@
                 selectAtividade.value = novaAtiv._id;
                 campoNovaAtividade.classList.add('hidden');
                 inputNovaAtividade.value = "";
+                avisoSemAtividade.classList.add('hidden');
                 idAtividadeAtiva = novaAtiv._id;
                 iniciarScannerAutomático();
             } catch (e) {
+                console.error("Erro ao criar atividade:", e);
                 alert("Erro ao criar atividade.");
             }
         }
 
         function iniciarScannerAutomático() {
-            pararScannerAutomático();
+            if (loopReconhecimento) clearInterval(loopReconhecimento);
             statusScanner.innerHTML = '🟢 Scanner Ativo';
             statusScanner.className = 'text-base font-bold text-green-600';
             loopReconhecimento = setInterval(executarReconhecimentoAutomatico, 1500);
@@ -192,24 +228,38 @@
 
         function pararScannerAutomático() {
             if (loopReconhecimento) clearInterval(loopReconhecimento);
+            loopReconhecimento = null;
             idAtividadeAtiva = "";
             statusScanner.innerHTML = '🔴 Aguardando Atividade';
             statusScanner.className = 'text-base font-bold text-red-600';
         }
 
         async function executarReconhecimentoAutomatico() {
+            console.log('Loop rodando. idAtividadeAtiva:', idAtividadeAtiva, '| aguardandoConfirmacao:', aguardandoConfirmacao);
+
             if (!idAtividadeAtiva) return;
+            if (aguardandoConfirmacao) return;
             if (Date.now() - timestampUltimoReconhecimento < 5000) return;
 
             try {
-                // Sincroniza as dimensões do vídeo com o canvas interno necessário para mapeamento da IA
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
+                console.log('Dimensões do vídeo:', video.videoWidth, 'x', video.videoHeight);
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    console.log('Vídeo ainda sem dimensões, pulando este ciclo.');
+                    return;
+                }
+
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // A IA agora lê a imagem estabilizada no plano do canvas externo com tolerância de corte ideal
-                const detection = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.2 })).withFaceLandmarks().withFaceDescriptor();
+                const detection = await faceapi
+                    .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.1 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                console.log('Tentativa de detecção:', detection ? 'ROSTO ENCONTRADO' : 'nenhum rosto detectado');
 
                 if (!detection) {
                     document.getElementById('textoResultado').innerText = "Aproxime seu rosto para registrar";
@@ -220,29 +270,82 @@
 
                 document.getElementById('textoResultado').innerText = "Identificando usuário...";
 
-                // Adicionamos um número dinâmico na URL (?t=...) para quebrar o cache do navegador
-                const response = await fetch(`/api/presencas/reconhecer?t=${Date.now()}`, {
+                const response = await fetch(`/api/presencas/identificar?t=${Date.now()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        atividadeId: idAtividadeAtiva,
                         faceDescriptor: Array.from(detection.descriptor)
                     })
                 });
 
                 const resultado = await response.json();
+                console.log('Resposta do backend:', resultado);
 
-                if (response.ok) {
-                    timestampUltimoReconhecimento = Date.now();
-                    mostrarResultadoVisivel(true, `Bem-vindo(a), ${resultado.nomeUsuario}!`);
-                    adicionarNaBarraLateral(resultado.nomeUsuario);
+                if (response.ok && resultado.sucesso) {
+                    const ultimaVez = registrosRecentes.get(resultado.idosoId);
+                    const agora = Date.now();
+
+                    if (ultimaVez && (agora - ultimaVez) < COOLDOWN_POR_PESSOA_MS) {
+                        // Já confirmou recentemente, não mostra o modal de novo
+                        const segundosRestantes = Math.ceil((COOLDOWN_POR_PESSOA_MS - (agora - ultimaVez)) / 1000);
+                        document.getElementById('textoResultado').innerText = `${resultado.nomeUsuario} já registrou presença.`;
+                        document.getElementById('iconeResultado').innerText = 'ℹ️';
+                        painelResultado.className = "mt-4 p-3 rounded-xl border-2 text-center bg-blue-50 border-blue-300 h-20 flex flex-col justify-center items-center font-bold text-lg";
+                        return;
+                    }
+
+                    abrirConfirmacao(resultado);
                 } else {
-                    mostrarResultadoVisivel(false, "Rosto não reconhecido.");
+                    mostrarResultadoVisivel(false, resultado.erro || "Rosto não reconhecido.");
                 }
 
             } catch (err) {
                 console.error("Erro no processamento:", err);
+                mostrarResultadoVisivel(false, "Erro de conexão com o servidor.");
             }
+        }
+
+        function abrirConfirmacao(resultado) {
+            aguardandoConfirmacao = true;
+            candidatoAtual = resultado; // { idosoId, nomeUsuario, distancia }
+            textoConfirmacao.innerText = `Você é ${resultado.nomeUsuario}?`;
+            modalConfirmacao.classList.remove('hidden');
+        }
+
+        async function responderConfirmacao(confirmou) {
+            modalConfirmacao.classList.add('hidden');
+
+            if (confirmou && candidatoAtual) {
+                try {
+                    const response = await fetch('/api/presencas/confirmar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            idosoId: candidatoAtual.idosoId,
+                            atividadeId: idAtividadeAtiva,
+                            distancia: candidatoAtual.distancia
+                        })
+                    });
+
+                    if (response.ok) {
+                        registrosRecentes.set(candidatoAtual.idosoId, Date.now());
+                        timestampUltimoReconhecimento = Date.now();
+                        mostrarResultadoVisivel(true, `Bem-vindo(a), ${candidatoAtual.nomeUsuario}!`);
+                        adicionarNaBarraLateral(candidatoAtual.nomeUsuario);
+                    } else {
+                        mostrarResultadoVisivel(false, "Erro ao confirmar presença.");
+                    }
+                } catch (err) {
+                    console.error("Erro ao confirmar presença:", err);
+                    mostrarResultadoVisivel(false, "Erro de conexão ao confirmar.");
+                }
+            } else {
+                timestampUltimoReconhecimento = Date.now();
+                mostrarResultadoVisivel(false, "Ok, tente novamente.");
+            }
+
+            aguardandoConfirmacao = false;
+            candidatoAtual = null;
         }
 
         function mostrarResultadoVisivel(sucesso, mensagem) {
@@ -286,6 +389,7 @@
             carregarAtividades();
         }).catch((err) => {
             document.getElementById('loadingIA').innerText = '❌ Falha crítica ao carregar Inteligência Artificial.';
+            console.error("Erro ao carregar modelos de IA:", err);
         });
     </script>
 </body>
