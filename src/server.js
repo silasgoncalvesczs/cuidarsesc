@@ -6,6 +6,7 @@ const path = require('path');
 const atividadeRoutes = require('./routes/atividadeRoutes');
 const idosoRoutes = require('./routes/idosoRoutes');
 const presencaRoutes = require('./routes/presencaRoutes');
+const usuarioRoutes = require('./routes/usuarioRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/atividades', atividadeRoutes);
 app.use('/api/idosos', idosoRoutes);
 app.use('/api/presencas', presencaRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Bem-vindo ao novo sistema de Gestão e Chamada CUIDAR SESC!' });

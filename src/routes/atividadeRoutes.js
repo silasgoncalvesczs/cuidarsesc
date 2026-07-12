@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const AtividadeController = require('../controllers/AtividadeController');
+const { autenticar, autorizar } = require('../middleware/auth');
 
-// Quando houver um GET nesta rota, lista as atividades
-router.get('/', AtividadeController.index);
-
-// Quando houver um POST, cria uma nova atividade
-router.post('/', AtividadeController.create);
+router.get('/', autenticar, autorizar('admin', 'gestor', 'operador'), AtividadeController.index);
+router.post('/', autenticar, autorizar('admin', 'gestor', 'operador'), AtividadeController.create);
 
 module.exports = router;
