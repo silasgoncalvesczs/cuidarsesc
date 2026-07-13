@@ -11,7 +11,7 @@
 <body class="totem-page">
     <div class="app-shell totem-shell">
         <header class="topbar topbar-compact">
-            <a class="topbar-link" href="/">
+            <a class="topbar-link" id="linkVoltar" href="/login.html">
                 <span class="icon-mask icon" style="mask-image:url('/icons/arrow-left.svg');-webkit-mask-image:url('/icons/arrow-left.svg')"></span>
                 Voltar
             </a>
@@ -21,11 +21,14 @@
                     <span class="icon-mask icon" id="iconTemaTopbar" style="mask-image:url('/icons/moon.svg');-webkit-mask-image:url('/icons/moon.svg')"></span>
                     <span id="labelTemaTopbar">Escuro</span>
                 </button>
-                <a class="topbar-btn" href="/conta.html">
+                <a class="topbar-btn" id="linkAcessoSistema" href="/login.html">
+                    Acesso ao sistema
+                </a>
+                <a class="topbar-btn hidden" id="linkConta" href="/conta.html">
                     <span class="icon-mask icon" style="mask-image:url('/icons/settings.svg');-webkit-mask-image:url('/icons/settings.svg')"></span>
                     Conta
                 </a>
-                <button type="button" class="topbar-btn" onclick="logout()">
+                <button type="button" class="topbar-btn hidden" id="btnSair" onclick="logout()">
                     <span class="icon-mask icon" style="mask-image:url('/icons/logout.svg');-webkit-mask-image:url('/icons/logout.svg')"></span>
                     Sair
                 </button>
@@ -40,21 +43,13 @@
                     <h2 class="section-title">Atividade</h2>
                     <div class="field">
                         <label for="selectAtividade">Selecione o evento</label>
-                        <select id="selectAtividade" onchange="verificarNovaAtividade(this.value)">
+                        <select id="selectAtividade" onchange="selecionarAtividade(this.value)">
                             <option value="">Carregando...</option>
                         </select>
                     </div>
 
-                    <div id="campoNovaAtividade" class="banner banner-warn hidden mt-2" style="text-align:left">
-                        <div class="field">
-                            <label for="inputNovaAtividade">Nome da atividade</label>
-                            <input type="text" id="inputNovaAtividade" placeholder="Ex: Informática Sênior">
-                        </div>
-                        <button type="button" class="btn btn-secondary w-full mt-1" onclick="salvarAtividadeRapida()">Criar e ativar</button>
-                    </div>
-
                     <div id="avisoSemAtividade" class="banner banner-danger hidden mt-2">
-                        Selecione ou crie uma atividade para iniciar o scanner.
+                        Nenhuma atividade ativa. Peça a um gestor para cadastrar em Atividades.
                     </div>
                 </div>
 
@@ -102,15 +97,23 @@
     <script src="/js/face-init.js"></script>
     <script src="/js/camera.js"></script>
     <script>
-        if (typeof exigirPerfil === 'function') {
-            exigirPerfil(['admin', 'gestor', 'operador']);
-        }
+        (function configurarTopo() {
+            const logado = typeof getToken === 'function' && !!getToken();
+            const linkVoltar = document.getElementById('linkVoltar');
+            const linkAcesso = document.getElementById('linkAcessoSistema');
+            const linkConta = document.getElementById('linkConta');
+            const btnSair = document.getElementById('btnSair');
+            if (logado) {
+                linkVoltar.href = '/index.html';
+                linkAcesso.classList.add('hidden');
+                linkConta.classList.remove('hidden');
+                btnSair.classList.remove('hidden');
+            }
+        })();
 
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasAuxiliar');
         const selectAtividade = document.getElementById('selectAtividade');
-        const campoNovaAtividade = document.getElementById('campoNovaAtividade');
-        const inputNovaAtividade = document.getElementById('inputNovaAtividade');
         const statusScanner = document.getElementById('statusScanner');
         const painelResultado = document.getElementById('painelResultado');
         const listaUltimosRegistros = document.getElementById('listaUltimosRegistros');
@@ -156,7 +159,7 @@
 
         async function carregarAtividades() {
             try {
-                const response = await fetchAutenticado('/api/atividades');
+                const response = await fetch('/api/atividades');
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const atividades = await response.json();
 
@@ -167,10 +170,6 @@
                     option.innerText = ativ.nome;
                     selectAtividade.appendChild(option);
                 });
-                const optionNova = document.createElement('option');
-                optionNova.value = 'NOVA';
-                optionNova.innerText = '[Criar nova atividade...]';
-                selectAtividade.appendChild(optionNova);
 
                 if (atividades.length === 0) {
                     avisoSemAtividade.classList.remove('hidden');
@@ -181,43 +180,14 @@
             }
         }
 
-        function verificarNovaAtividade(valor) {
-            if (valor === 'NOVA') {
-                campoNovaAtividade.classList.remove('hidden');
-                pararScannerAutomático();
-            } else {
-                campoNovaAtividade.classList.add('hidden');
-                if (valor) {
-                    avisoSemAtividade.classList.add('hidden');
-                    idAtividadeAtiva = valor;
-                    iniciarScannerAutomático();
-                } else {
-                    pararScannerAutomático();
-                }
-            }
-        }
-
-        async function salvarAtividadeRapida() {
-            const nome = inputNovaAtividade.value.trim();
-            if (!nome) return;
-
-            try {
-                const response = await fetchAutenticado('/api/atividades', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: nome, categoria: 'Outros' })
-                });
-                const novaAtiv = await response.json();
-                await carregarAtividades();
-                selectAtividade.value = novaAtiv._id;
-                campoNovaAtividade.classList.add('hidden');
-                inputNovaAtividade.value = '';
+        function selecionarAtividade(valor) {
+            if (valor) {
                 avisoSemAtividade.classList.add('hidden');
-                idAtividadeAtiva = novaAtiv._id;
+                idAtividadeAtiva = valor;
                 iniciarScannerAutomático();
-            } catch (e) {
-                console.error(e);
-                alert('Erro ao criar atividade.');
+            } else {
+                idAtividadeAtiva = '';
+                pararScannerAutomático();
             }
         }
 
@@ -261,7 +231,7 @@
 
                 document.getElementById('textoResultado').innerText = 'Identificando...';
 
-                const response = await fetchAutenticado('/api/presencas/identificar?t=' + Date.now(), {
+                const response = await fetch('/api/presencas/identificar?t=' + Date.now(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ faceDescriptor: Array.from(detection.descriptor) })
@@ -302,7 +272,7 @@
 
             if (confirmou && candidatoAtual) {
                 try {
-                    const response = await fetchAutenticado('/api/presencas/confirmar', {
+                    const response = await fetch('/api/presencas/confirmar', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

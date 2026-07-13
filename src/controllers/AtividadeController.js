@@ -47,11 +47,18 @@ module.exports = {
         try {
             const { ativo, busca, categoria, todas } = req.query;
             const filtro = {};
+            const autenticado = Boolean(req.usuario);
 
-            // Totem e uso operacional: só ativas, salvo se pedir filtro/todas
-            if (ativo === 'true') filtro.ativo = true;
-            else if (ativo === 'false') filtro.ativo = false;
-            else if (todas !== 'true' && ativo === undefined) filtro.ativo = true;
+            // Público (totem): só atividades ativas
+            if (!autenticado) {
+                filtro.ativo = true;
+            } else if (ativo === 'true') {
+                filtro.ativo = true;
+            } else if (ativo === 'false') {
+                filtro.ativo = false;
+            } else if (todas !== 'true' && ativo === undefined) {
+                filtro.ativo = true;
+            }
 
             if (categoria) filtro.categoria = String(categoria).trim();
 
