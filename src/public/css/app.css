@@ -663,9 +663,26 @@ body.totem-page {
   overflow: hidden;
 }
 
-@media (min-width: 1000px) {
+/* Layout em 3 colunas só em tela horizontal larga */
+@media (min-width: 1000px) and (orientation: landscape) {
   .totem-layout {
     grid-template-columns: 260px minmax(0, 1.6fr) 260px;
+  }
+
+  .totem-panel-atividade {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .totem-panel-atividade .totem-atividade-main {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .totem-panel-atividade .totem-status {
+    margin-top: auto;
   }
 }
 
@@ -694,6 +711,121 @@ body.totem-page {
 
 .totem-camera-col {
   min-height: 0;
+}
+
+/* ——— Totem vertical (kiosk portrait) ——— */
+@media (orientation: portrait) {
+  .totem-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    padding: 0.55rem 0.65rem 0.7rem;
+  }
+
+  .totem-panel-atividade {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(140px, 0.9fr);
+    gap: 0.65rem;
+    align-items: stretch;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .totem-panel-atividade .section-title {
+    margin-bottom: 0.4rem;
+    font-size: 1.05rem;
+  }
+
+  .totem-panel-atividade .totem-status {
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+
+  .totem-camera-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .totem-camera-col .camera-frame.tall {
+    flex: 1 1 auto;
+    width: min(100%, 72vh);
+    max-height: none;
+    margin: 0 auto;
+    aspect-ratio: 3 / 4;
+    max-height: calc(100% - 4.2rem);
+  }
+
+  .totem-camera-col .result-panel {
+    margin-top: 0;
+    min-height: 52px;
+    font-size: 1.05rem;
+  }
+
+  .totem-camera-col .result-panel strong {
+    font-size: 1.12rem;
+  }
+
+  .totem-panel-historico {
+    max-height: 24vh;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .totem-panel-historico .section-title {
+    margin-bottom: 0.45rem;
+    font-size: 1.05rem;
+  }
+
+  .totem-panel-historico .history-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .totem-panel-historico .history-list > .lead {
+    flex: 1;
+    margin: 0;
+    padding: 0.55rem 0;
+  }
+
+  .totem-panel-historico .history-item {
+    flex: 0 0 auto;
+    min-width: 168px;
+    max-width: 220px;
+  }
+
+  .modal-card {
+    width: min(560px, calc(100% - 1.2rem));
+    padding: 1.5rem 1.2rem;
+  }
+
+  .modal-card h2 {
+    font-size: clamp(1.45rem, 4.5vw, 2rem);
+  }
+
+  .modal-actions .btn-xl {
+    min-height: 72px;
+    font-size: 1.45rem;
+  }
+}
+
+/* Telas portrait estreitas: atividade empilha */
+@media (orientation: portrait) and (max-width: 700px) {
+  .totem-panel-atividade {
+    grid-template-columns: 1fr;
+  }
+
+  .totem-camera-col .camera-frame.tall {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+  }
 }
 
 .camera-frame {
